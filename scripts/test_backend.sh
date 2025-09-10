@@ -42,7 +42,7 @@ dfx canister call pawndao_backend loanRequestNew '(
   )'
 
 
-dfx --identity default canister call pawndao_backend loanOfferNew '(
+dfx --identity pawn_loaner canister call pawndao_backend loanOfferNew '(
   0 : nat,
   principal "ryjl3-tyaaa-aaaaa-aaaba-cai",
   1_000_000_000 : nat,
@@ -51,7 +51,7 @@ dfx --identity default canister call pawndao_backend loanOfferNew '(
 )'
 
 # create loan offer with invalid loan request id
-dfx --identity default canister call pawndao_backend loanOfferNew '(
+dfx --identity pawn_loaner canister call pawndao_backend loanOfferNew '(
   6900 : nat,
   principal "ryjl3-tyaaa-aaaaa-aaaba-cai",
   1_000_000_000 : nat,
@@ -59,5 +59,22 @@ dfx --identity default canister call pawndao_backend loanOfferNew '(
   1.15 : float64,
 )'
 
+echo "Borrower ICP balance:"
+dfx --identity dev ledger balance
 
+echo "pawn_loaner ICP balance:"
+dfx --identity pawn_loaner ledger balance
+
+echo "Accept Loan Offer"
 dfx canister call pawndao_backend loanOfferAccept 0
+
+# dfx canister call pawndao_backend loanById 0
+
+echo "Borrower ICP balance:"
+dfx --identity dev ledger balance
+
+echo "pawn_loaner ICP balance:"
+dfx --identity pawn_loaner ledger balance
+
+
+

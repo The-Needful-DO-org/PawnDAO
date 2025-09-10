@@ -11,6 +11,7 @@ import PureList "mo:core/pure/List";
 import ICRC "./ICRC";
 import Result "mo:core/Result";
 import Error "mo:core/Error";
+import Time "mo:core/Time";
 
 
 persistent actor PawnDAO {
@@ -56,7 +57,7 @@ public type LoanRequest = {
     desired_asset_canister_ids : [Principal];
     desired_amounts : [(Principal, Nat)];
     desired_duration : Nat;
-    desired_apr : Float;
+    desired_interest : Float;
     // timestamp : Int;
   };
 
@@ -71,7 +72,7 @@ public type LoanRequest = {
     desired_asset_canister_ids : [Principal],
     desired_amounts : [(Principal, Nat)],
     desired_duration : Nat,
-    desired_apr : Float,
+    desired_interest : Float,
 ) : async Principal {
     // let caller = Principal.fromActor(this); // Replace with `Principal.fromCaller()` for real user
     let caller = msg.caller; // Replace with `Principal.fromCaller()` for real user
@@ -88,7 +89,7 @@ public type LoanRequest = {
       desired_asset_canister_ids = desired_asset_canister_ids;
       desired_amounts = desired_amounts;
       desired_duration = desired_duration;
-      desired_apr = desired_apr;
+      desired_interest = desired_interest;
       // timestamp = 0; // Replace 0 with actual timestamp
     };
     let updated = List.add(loan_requests, newLoanRequest);
@@ -140,6 +141,25 @@ public type LoanOffer = {
 
   transient var userLoanOffers = Map.empty<Principal, List.List<LoanOffer>>();
   transient var nextLoanOfferId = 0;
+
+public type Loan = {
+    id : Nat;
+    loan_request_id : Nat;
+    loan_offer_id : Nat;
+    borrower_user_id : Principal;
+    lender_user_id : Principal;
+    collateral_canister_id : Principal;
+    collateral_amount : Nat;
+    loan_asset_canister_id : Principal;
+    loan_amount : Nat;
+    duration : Nat;
+    interest : Float;
+    timestamp : Int;
+    // status : Text;
+  };
+
+  transient var idLoansMap = Map.empty<Nat, Loan>();
+  transient var nextLoanId : Nat = 0;
 
   public shared(msg) func loanOfferNew(
     loan_request_id : Nat,
@@ -215,7 +235,7 @@ public type LoanOffer = {
 
   public shared(msg) func loanOfferAccept(
     loan_offer_id : Nat,
-) : async ?LoanOffer {
+) : async ?Loan {
     let caller = msg.caller; // Replace with `Principal.fromCaller()` for real user
     var loan_offer : ?LoanOffer = null;
     for ((_, l) in Map.entries(userLoanOffers)) { // iterator over entries [[Map entries](https://internetcomputer.org/docs/motoko/core/Map#function-entries)]
@@ -230,7 +250,7 @@ public type LoanOffer = {
     // return loan_offer;
 
     switch (loan_offer) {
-      case (null) { null };
+      case (null) { null }; // TODO return Result with message
       case (?loan_offer) { 
        // TODO validate caller is loan requester
        // TODO validate loan offer i.e. already accepted?
@@ -238,7 +258,6 @@ public type LoanOffer = {
        // let loan_request_maybe = loanRequestById(loan_offer.loan_request_id);
        let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
 
-       // TODO capture collateral 
        // Perform the transfer, to capture the tokens.
        // TODO use token-handler https://github.com/research-ag/token-handler/blob/main/example/main.mo
        let token : ICRC.Actor = actor (Principal.toText(loan_request.collateral_canister_id));
@@ -255,11 +274,47 @@ public type LoanOffer = {
        // TODO validate collateral_transfer_result 
 
        // TODO distribute loan 
+       let loan_token : ICRC.Actor = actor (Principal.toText(loan_offer.loan_asset_canister_id ));
+       let loan_transfer_result = await loan_token.icrc2_transfer_from({
+         spender_subaccount = null;
+         from = { owner = loan_offer.user_id; subaccount = null};
+         to = { owner = msg.caller; subaccount = null }; // maybe use loan_request.user_id instead of msg.caller
+         amount = loan_offer.loan_amount;
+         fee = null;
+         memo = null;
+         created_at_time = null;
+       });
 
-       ?loan_offer 
+       // TODO validate loan_transfer_result 
+       // TODO create Loan
+       let new_loan = {
+         id : Nat = nextLoanId;
+         loan_request_id : Nat = loan_request.id;
+         loan_offer_id : Nat = loan_offer.id;
+         borrower_user_id : Principal = loan_request.user_id;
+         lender_user_id : Principal = loan_offer.user_id;
+         collateral_canister_id : Principal = loan_request.collateral_canister_id;
+         collateral_amount : Nat = loan_request.collateral_amount;
+         loan_asset_canister_id : Principal = loan_offer.loan_asset_canister_id;
+         loan_amount : Nat = loan_offer.loan_amount;
+         duration : Nat = loan_offer.duration;
+         interest : Float = loan_offer.interest;
+         timestamp : Int = Time.now();
+         // status : Text;
+       };
+
+       Map.add(idLoansMap, Nat.compare, new_loan.id, new_loan);
+       nextLoanId += 1;
+
+       // ?loan_offer 
+       ?new_loan
       };
     };
 
+  };
+
+  public query func loanById(loan_id: Nat) : async ?Loan {
+    return Map.get(idLoansMap, Nat.compare, loan_id);
   };
 
 };
