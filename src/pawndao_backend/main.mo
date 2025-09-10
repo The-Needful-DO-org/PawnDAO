@@ -6,6 +6,7 @@ import Principal "mo:core/Principal";
 import List "mo:core/List";
 import Iter "mo:core/Iter";
 import Debug "mo:base/Debug";
+import PureList "mo:core/pure/List";
 
 
 persistent actor {
@@ -111,6 +112,17 @@ public type LoanRequest = {
   //  return allLoanRequests;
   // };
 
+
+public query func loanRequestsAll() : async [LoanRequest] {
+  var acc : [LoanRequest] = [];
+  for ((_, l) in Map.entries(userLoanRequests)) { // iterator over entries [[Map entries](https://internetcomputer.org/docs/motoko/core/Map#function-entries)]
+    let va = List.toVarArray<LoanRequest>(l);    // List<T> -> [var T] [[List toVarArray](https://internetcomputer.org/docs/motoko/core/List#function-tovararray)]
+    let a = Array.fromVarArray<LoanRequest>(va);  // [var T] -> [T] [[fromVarArray](https://internetcomputer.org/docs/motoko/core/List#function-fromvararray)]
+    acc := Array.concat(acc, a);
+  };
+  return acc;
+};
+
 public type LoanOffer = {
     id : Nat;
     loan_request_id : Nat;
@@ -161,6 +173,46 @@ public type LoanOffer = {
       case (?list) List.toArray(list);
       case null [];
     }
+  };
+
+  public query func loanOffersAll() : async [LoanOffer] {
+    var acc : [LoanOffer] = [];
+    for ((_, l) in Map.entries(userLoanOffers)) { // iterator over entries [[Map entries](https://internetcomputer.org/docs/motoko/core/Map#function-entries)]
+      let va = List.toVarArray<LoanOffer>(l);    // List<T> -> [var T] [[List toVarArray](https://internetcomputer.org/docs/motoko/core/List#function-tovararray)]
+      let a = Array.fromVarArray<LoanOffer>(va);  // [var T] -> [T] [[fromVarArray](https://internetcomputer.org/docs/motoko/core/List#function-fromvararray)]
+      acc := Array.concat(acc, a);
+    };
+    return acc;
+  };
+
+
+  public shared(msg) func loanOfferAccept(
+    loan_offer_id : Nat,
+) : async ?LoanOffer {
+    let caller = msg.caller; // Replace with `Principal.fromCaller()` for real user
+    var loan_offer : ?LoanOffer = null;
+    for ((_, l) in Map.entries(userLoanOffers)) { // iterator over entries [[Map entries](https://internetcomputer.org/docs/motoko/core/Map#function-entries)]
+      let va = List.toVarArray<LoanOffer>(l);    // List<T> -> [var T] [[List toVarArray](https://internetcomputer.org/docs/motoko/core/List#function-tovararray)]
+      let a = Array.fromVarArray<LoanOffer>(va);  // [var T] -> [T] [[fromVarArray](https://internetcomputer.org/docs/motoko/core/List#function-fromvararray)]
+      List.forEach<LoanOffer>(l, func (offer) {
+        if (offer.id == loan_offer_id ) {
+          loan_offer := ?offer;
+        }
+      });
+    };
+    // return loan_offer;
+
+    switch (loan_offer) {
+      case (null) { null };
+      case (?loan_offer) { 
+       // TODO validate caller is loan requester
+       // TODO capture collateral 
+       // TODO distribute loan 
+
+       loan_offer 
+      };
+    };
+
   };
 
 };
