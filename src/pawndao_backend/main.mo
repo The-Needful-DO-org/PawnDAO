@@ -7,9 +7,13 @@ import List "mo:core/List";
 import Iter "mo:core/Iter";
 import Debug "mo:base/Debug";
 import PureList "mo:core/pure/List";
+// Import our ICRC type definitions
+import ICRC "./ICRC";
+import Result "mo:core/Result";
+import Error "mo:core/Error";
 
 
-persistent actor {
+persistent actor PawnDAO {
   public query func greet(name : Text) : async Text {
     return "Hello, " # name # "!";
   };
@@ -185,6 +189,29 @@ public type LoanOffer = {
     return acc;
   };
 
+  public shared func loanRequestByIdAsync(loan_request_id : Nat) : async ?LoanRequest {
+    var loan_request : ?LoanRequest = null;
+    for ((_, loan_requests) in Map.entries(userLoanRequests)) {
+      List.forEach<LoanRequest>(loan_requests, func (iter_loan_request) {
+        if (iter_loan_request.id == loan_request_id) {
+           loan_request := ?iter_loan_request;
+        }
+      });
+    };
+    return loan_request;
+  };
+
+  private func loanRequestById(loan_request_id : Nat) : ?LoanRequest {
+    var loan_request : ?LoanRequest = null;
+    for ((_, loan_requests) in Map.entries(userLoanRequests)) {
+      List.forEach<LoanRequest>(loan_requests, func (iter_loan_request) {
+        if (iter_loan_request.id == loan_request_id) {
+           loan_request := ?iter_loan_request;
+        }
+      });
+    };
+    return loan_request;
+  };
 
   public shared(msg) func loanOfferAccept(
     loan_offer_id : Nat,
@@ -206,10 +233,30 @@ public type LoanOffer = {
       case (null) { null };
       case (?loan_offer) { 
        // TODO validate caller is loan requester
+       // TODO validate loan offer i.e. already accepted?
+       // TODO ensure atomicity
+       // let loan_request_maybe = loanRequestById(loan_offer.loan_request_id);
+       let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
+
        // TODO capture collateral 
+       // Perform the transfer, to capture the tokens.
+       // TODO use token-handler https://github.com/research-ag/token-handler/blob/main/example/main.mo
+       let token : ICRC.Actor = actor (Principal.toText(loan_request.collateral_canister_id));
+       let collateral_transfer_result = await token.icrc2_transfer_from({
+         spender_subaccount = null;
+         from = { owner = msg.caller; subaccount = null};
+         to = { owner = Principal.fromActor(PawnDAO); subaccount = null };
+         amount = loan_request.collateral_amount;
+         fee = null;
+         memo = null;
+         created_at_time = null;
+       });
+
+       // TODO validate collateral_transfer_result 
+
        // TODO distribute loan 
 
-       loan_offer 
+       ?loan_offer 
       };
     };
 

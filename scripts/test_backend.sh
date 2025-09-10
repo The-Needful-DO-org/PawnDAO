@@ -33,7 +33,7 @@ dfx --identity pawn_loaner canister call icp_ledger_canister icrc2_approve '(
 
 
 dfx canister call pawndao_backend loanRequestNew '(
-  principal "umunu-kh777-77774-qaaca-cai",
+  principal "llcdy-4qaaa-aaaah-arcua-cai",
   10_000_000_000 : nat,
   vec {},
   vec {},
@@ -49,3 +49,15 @@ dfx --identity default canister call pawndao_backend loanOfferNew '(
   30 : nat,
   1.15 : float64,
 )'
+
+# create loan offer with invalid loan request id
+dfx --identity default canister call pawndao_backend loanOfferNew '(
+  6900 : nat,
+  principal "ryjl3-tyaaa-aaaaa-aaaba-cai",
+  1_000_000_000 : nat,
+  30 : nat,
+  1.15 : float64,
+)'
+
+
+dfx canister call pawndao_backend loanOfferAccept 0
