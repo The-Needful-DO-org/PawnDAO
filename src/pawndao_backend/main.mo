@@ -145,6 +145,15 @@ public type LoanOffer = {
   transient var userLoanOffers = Map.empty<Principal, List.List<LoanOffer>>();
   transient var nextLoanOfferId = 0;
 
+type LoanStatus = {
+  #Pending;
+  #Active;
+  #Inactive;
+  #Repaid;
+  #Defaulted;
+  // #Banned : Text; // Optionally carry extra data, like a reason
+};
+
 public type Loan = {
     id : Nat;
     loan_request_id : Nat;
@@ -158,7 +167,7 @@ public type Loan = {
     duration : Nat;
     interest : Float;
     timestamp : Int;
-    // status : Text;
+    status : LoanStatus;
   };
 
   transient var idLoansMap = Map.empty<Nat, Loan>();
@@ -303,7 +312,7 @@ public type Loan = {
          duration : Nat = loan_offer.duration;
          interest : Float = loan_offer.interest;
          timestamp : Int = Time.now();
-         // status : Text;
+         status : LoanStatus = #Active;
        };
 
        Map.add(idLoansMap, Nat.compare, new_loan.id, new_loan);
@@ -324,6 +333,7 @@ public type Loan = {
     let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else return null; // TODO Result with message if loan not found
 
     // TODO validate loan, status, transactions, etc...
+    if (loan.status == #Repaid) { throw Error.reject("Loan already repaid") }; // TODO return Response instead of error
 
     let amount_to_repay_float = (Float.fromInt(Nat.toInt(loan.loan_amount)) * (1.0 + loan.interest / 100.0));
     // let amount_to_repay = (1000000000 * (1.0 + 1.1 / 100.0));
@@ -358,10 +368,12 @@ public type Loan = {
           created_at_time = null;
         });
 
-     // TODO validate loan_return_collateral_transfer_result
-     // TODO update Loan status, record of payment
+    // TODO validate loan_return_collateral_transfer_result
+    // TODO update Loan status, record of payment
+    let modified_loan = { loan with status = #Repaid };
+    Map.add(idLoansMap, Nat.compare, modified_loan.id, modified_loan);
 
-    return ?loan;
+    return ?modified_loan;
   };
 
 };
