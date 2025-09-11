@@ -31,6 +31,23 @@ dfx --identity pawn_loaner canister call icp_ledger_canister icrc2_approve '(
   },
 )'
 
+# approve ICP transfer from borrower
+dfx --identity dev canister call icp_ledger_canister icrc2_approve '(
+  record {
+    fee = null;
+    memo = null;
+    from_subaccount = null;
+    created_at_time = null;
+    amount = 4_206_900_000_000_000_000 : nat;
+    expected_allowance = null;
+    expires_at = null;
+    spender = record {
+      owner = principal "uxrrr-q7777-77774-qaaaq-cai";
+      subaccount = null;
+    };
+  },
+)'
+
 
 dfx canister call pawndao_backend loanRequestNew '(
   principal "llcdy-4qaaa-aaaah-arcua-cai",
@@ -38,7 +55,7 @@ dfx canister call pawndao_backend loanRequestNew '(
   vec {},
   vec {},
   30 : nat,
-  4.2 : float64,
+  1.1 : float64,
   )'
 
 
@@ -47,7 +64,7 @@ dfx --identity pawn_loaner canister call pawndao_backend loanOfferNew '(
   principal "ryjl3-tyaaa-aaaaa-aaaba-cai",
   1_000_000_000 : nat,
   30 : nat,
-  1.15 : float64,
+  1.1 : float64,
 )'
 
 # create loan offer with invalid loan request id
@@ -76,5 +93,13 @@ dfx --identity dev ledger balance
 echo "pawn_loaner ICP balance:"
 dfx --identity pawn_loaner ledger balance
 
+echo "Repay Loan"
+dfx canister call pawndao_backend loanRepay 0
+
+echo "Borrower ICP balance:"
+dfx --identity dev ledger balance
+
+echo "pawn_loaner ICP balance:"
+dfx --identity pawn_loaner ledger balance
 
 

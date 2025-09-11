@@ -12,6 +12,9 @@ import ICRC "./ICRC";
 import Result "mo:core/Result";
 import Error "mo:core/Error";
 import Time "mo:core/Time";
+import Float "mo:core/Float";
+import Int "mo:core/Int";
+
 
 
 persistent actor PawnDAO {
@@ -315,6 +318,50 @@ public type Loan = {
 
   public query func loanById(loan_id: Nat) : async ?Loan {
     return Map.get(idLoansMap, Nat.compare, loan_id);
+  };
+
+  public shared(msg) func loanRepay(loan_id: Nat) : async ?Loan {
+    let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else return null; // TODO Result with message if loan not found
+
+    // TODO validate loan, status, transactions, etc...
+
+    let amount_to_repay_float = (Float.fromInt(Nat.toInt(loan.loan_amount)) * (1.0 + loan.interest / 100.0));
+    // let amount_to_repay = (1000000000 * (1.0 + 1.1 / 100.0));
+    let amount_to_repay_nat : Nat = Int.abs(Float.toInt(amount_to_repay_float));
+    Debug.print(debug_show(amount_to_repay_nat));
+
+    let token : ICRC.Actor = actor (Principal.toText(loan.loan_asset_canister_id));
+    let loan_repay_transfer_result = await token.icrc2_transfer_from({
+          spender_subaccount = null;
+          from = { owner = msg.caller; subaccount = null};
+          to = { owner = loan.lender_user_id; subaccount = null };
+          amount = amount_to_repay_nat;
+          fee = null;
+          memo = null;
+          created_at_time = null;
+        });
+
+     // TODO validate loan_repay_transfer_result
+
+     // TODO update Loan status, record of payment
+
+     // return the collateral
+    let collateral_token : ICRC.Actor = actor (Principal.toText(loan.collateral_canister_id));
+    let collateral_transfer_fee = 10_000; // TODO dynamic fee
+    let loan_return_collateral_transfer_result = await collateral_token.icrc2_transfer_from({
+          spender_subaccount = null;
+          from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
+          to = { owner = loan.borrower_user_id; subaccount = null };
+          amount = loan.collateral_amount - collateral_transfer_fee;
+          fee = null;
+          memo = null;
+          created_at_time = null;
+        });
+
+     // TODO validate loan_return_collateral_transfer_result
+     // TODO update Loan status, record of payment
+
+    return ?loan;
   };
 
 };
