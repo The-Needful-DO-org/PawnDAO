@@ -14,5 +14,10 @@
   "type": "module",
   "workspaces": [
     "src/pawndao_frontend"
-  ]
+  ],
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.13",
+    "daisyui": "^5.1.10",
+    "tailwindcss": "^4.1.13"
+  }
 }
