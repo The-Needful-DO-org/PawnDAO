@@ -1,8 +1,10 @@
 <script>
+  import { preventDefault } from 'svelte/legacy';
+
   import "../index.scss";
   import { backend } from "$lib/canisters";
 
-  let greeting = "";
+  let greeting = $state("");
 
   function onSubmit(event) {
     const name = event.target.name.value;
@@ -17,7 +19,7 @@
   <img src="/logo2.svg" alt="DFINITY logo" />
   <br />
   <br />
-  <form action="#" on:submit|preventDefault={onSubmit}>
+  <form action="#" onsubmit={preventDefault(onSubmit)}>
     <label for="name">Enter your name: &nbsp;</label>
     <input id="name" alt="Name" type="text" />
     <button type="submit">Click Me!</button>
