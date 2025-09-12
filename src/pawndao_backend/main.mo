@@ -167,6 +167,7 @@ type LoanStatus = {
   #Inactive;
   #Repaid;
   #Defaulted;
+  #Cancelled;
   // #Banned : Text; // Optionally carry extra data, like a reason
 };
 
@@ -378,6 +379,7 @@ public type Loan = {
     // TODO return Response instead of error
     if (loan.borrower_user_id != msg.caller) { throw Error.reject("Not your loan") };
     if (loan.status == #Repaid) { throw Error.reject("Loan already repaid") };
+    if (loan.status == #Cancelled) { throw Error.reject("Loan is cancelled") };
 
     let amount_to_repay_float = (Float.fromInt(Nat.toInt(loan.loan_amount)) * (1.0 + loan.interest / 100.0));
     // let amount_to_repay = (1000000000 * (1.0 + 1.1 / 100.0));
@@ -415,6 +417,39 @@ public type Loan = {
     // TODO validate loan_return_collateral_transfer_result
     // TODO update Loan status, record of payment
     let modified_loan = { loan with status = #Repaid };
+    Map.add(idLoansMap, Nat.compare, modified_loan.id, modified_loan);
+
+    return ?modified_loan;
+  };
+
+  public shared(msg) func loanDefault(loan_id: Nat) : async ?Loan {
+    let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else return null;
+
+    // Only lender can call this
+    if (loan.lender_user_id != msg.caller) { throw Error.reject("Only lender can default loan") };
+
+    // Validate loan status and permissions
+    if (loan.status == #Defaulted) { throw Error.reject("Loan already defaulted") };
+    if (loan.status == #Repaid) { throw Error.reject("Loan already repaid") };
+    if (loan.status == #Cancelled) { throw Error.reject("Loan is cancelled") };
+
+    // Transfer collateral to lender
+    let collateral_token : ICRC.Actor = actor (Principal.toText(loan.collateral_canister_id));
+    let collateral_transfer_fee = 10_000; // TODO dynamic fee
+    let collateral_transfer_result = await collateral_token.icrc2_transfer_from({
+          spender_subaccount = null;
+          from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
+          to = { owner = loan.lender_user_id; subaccount = null };
+          amount = loan.collateral_amount - collateral_transfer_fee;
+          fee = null;
+          memo = null;
+          created_at_time = null;
+        });
+
+    // TODO: validate collateral_transfer_result
+
+    // Update loan status
+    let modified_loan = { loan with status = #Defaulted };
     Map.add(idLoansMap, Nat.compare, modified_loan.id, modified_loan);
 
     return ?modified_loan;
