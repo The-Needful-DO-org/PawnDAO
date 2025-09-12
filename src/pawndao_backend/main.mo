@@ -50,6 +50,12 @@ persistent actor PawnDAO {
 //     return account1.getBalance();
 //   };
 
+type LoanRequestStatus = {
+  #Pending;
+  #Matched;
+  #Cancelled;
+  // #Banned : Text; // Optionally carry extra data, like a reason
+};
 
 public type LoanRequest = {
     id : Nat;
@@ -61,6 +67,7 @@ public type LoanRequest = {
     desired_amounts : [(Principal, Nat)];
     desired_duration : Nat;
     desired_interest : Float;
+    status : LoanRequestStatus;
     // timestamp : Int;
   };
 
@@ -93,6 +100,7 @@ public type LoanRequest = {
       desired_amounts = desired_amounts;
       desired_duration = desired_duration;
       desired_interest = desired_interest;
+      status = #Pending;
       // timestamp = 0; // Replace 0 with actual timestamp
     };
     let updated = List.add(loan_requests, newLoanRequest);
@@ -131,6 +139,13 @@ public query func loanRequestsAll() : async [LoanRequest] {
   return acc;
 };
 
+type LoanOfferStatus = {
+  #Pending;
+  #Accepted;
+  #Cancelled;
+  // #Banned : Text; // Optionally carry extra data, like a reason
+};
+
 public type LoanOffer = {
     id : Nat;
     loan_request_id : Nat;
@@ -140,6 +155,7 @@ public type LoanOffer = {
     duration : Nat;
     interest : Float;
     // timestamp : Int;
+    status : LoanOfferStatus;
   };
 
   transient var userLoanOffers = Map.empty<Principal, List.List<LoanOffer>>();
@@ -195,6 +211,7 @@ public type Loan = {
       loan_amount = loan_amount;
       duration = duration;
       interest = interest;
+      status = #Pending;
       // timestamp = 0; // Replace 0 with actual timestamp
     };
     let updated = List.add(loan_offers, newLoanOffer);
@@ -245,6 +262,12 @@ public type Loan = {
     return loan_request;
   };
 
+  // to get index of loanoffer list
+  // TODO probably change the stable var user map List to a Map by id
+  func loanOfferEqualById(a: LoanOffer, b: LoanOffer) : Bool {
+    a.id == b.id
+  };
+
   public shared(msg) func loanOfferAccept(
     loan_offer_id : Nat,
 ) : async ?Loan {
@@ -264,11 +287,16 @@ public type Loan = {
     switch (loan_offer) {
       case (null) { null }; // TODO return Result with message
       case (?loan_offer) { 
-       // TODO validate caller is loan requester
        // TODO validate loan offer i.e. already accepted?
+       if (loan_offer.status == #Accepted) { throw Error.reject("Loan Offer already accepted") };
+       if (loan_offer.status == #Cancelled) { throw Error.reject("Loan Offer cancelled") };
+       if (loan_offer.status != #Pending) { throw Error.reject("Loan Offer not pending") };
+
        // TODO ensure atomicity
        // let loan_request_maybe = loanRequestById(loan_offer.loan_request_id);
        let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
+       // validate caller is loan requester
+       if (loan_request.user_id != msg.caller) { throw Error.reject("You are not the loan requester") };
 
        // Perform the transfer, to capture the tokens.
        // TODO use token-handler https://github.com/research-ag/token-handler/blob/main/example/main.mo
@@ -318,6 +346,20 @@ public type Loan = {
        Map.add(idLoansMap, Nat.compare, new_loan.id, new_loan);
        nextLoanId += 1;
 
+       // TODO update LoanOffer status
+       let modified_loan_offer = { loan_offer with status = #Accepted };
+       // Map.add(userLoanOffers, Principal.compare, modified_loan.id, modified_loan);
+       let loan_offers = switch (Map.get(userLoanOffers, Principal.compare, loan_offer.user_id)) {
+         case (?list) list;
+         case null List.empty<LoanOffer>();
+       };
+       // let updated_loan_offers = List.set(loan_offers, 0, modified_loan_offer );
+       let ?loan_offer_index = List.indexOf<LoanOffer>(loan_offers, loanOfferEqualById, loan_offer ) else throw Error.reject("Loan Offer index not found");
+       List.put(loan_offers, loan_offer_index, modified_loan_offer );
+       Map.add(userLoanOffers, Principal.compare, loan_offer.user_id, loan_offers);
+
+
+
        // ?loan_offer 
        ?new_loan
       };
@@ -333,7 +375,9 @@ public type Loan = {
     let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else return null; // TODO Result with message if loan not found
 
     // TODO validate loan, status, transactions, etc...
-    if (loan.status == #Repaid) { throw Error.reject("Loan already repaid") }; // TODO return Response instead of error
+    // TODO return Response instead of error
+    if (loan.borrower_user_id != msg.caller) { throw Error.reject("Not your loan") };
+    if (loan.status == #Repaid) { throw Error.reject("Loan already repaid") };
 
     let amount_to_repay_float = (Float.fromInt(Nat.toInt(loan.loan_amount)) * (1.0 + loan.interest / 100.0));
     // let amount_to_repay = (1000000000 * (1.0 + 1.1 / 100.0));
