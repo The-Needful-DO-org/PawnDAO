@@ -105,8 +105,8 @@ dfx --identity dev ledger balance
 echo "pawn_loaner ICP balance:"
 dfx --identity pawn_loaner ledger balance
 
-echo "Repay Loan"
-dfx canister call pawndao_backend loanRepay 0
+# echo "Repay Loan"
+# dfx canister call pawndao_backend loanRepay 0
 
 echo "Backend TPAWN balance:"
 dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "uxrrr-q7777-77774-qaaaq-cai";    subaccount = null; },    )'
@@ -119,5 +119,8 @@ dfx --identity dev ledger balance
 
 echo "pawn_loaner ICP balance:"
 dfx --identity pawn_loaner ledger balance
+
+echo "Lender TPAWN balance:"
+dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "527hb-qvt5w-dekj5-hmae5-jxhgs-vqo7l-jenzt-4ovjb-hi7yr-7ujgd-nae";    subaccount = null; }, )'
 
 

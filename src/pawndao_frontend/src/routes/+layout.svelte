@@ -1,6 +1,6 @@
 <script lang="ts">
   import "../app.css";
- //  import "../index.scss";
+  import "../index.scss";
  //  import Wallet from "../lib/Wallet.svelte";
 	// // import type { PageProps } from './$types';
  //  import { page } from '$app/state'
@@ -9,8 +9,11 @@
  //  import { onMount } from "svelte";
  //  import { tick } from 'svelte';
 	let { children } = $props();
+  import Navbar from "$lib/components/Navbar.svelte";
 
 </script>
+
+<Navbar/>
 
 {@render children()}
 
