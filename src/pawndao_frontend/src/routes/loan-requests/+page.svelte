@@ -9,7 +9,7 @@
   <h2>Loan Requests</h2>
   {#each data.loanRequests as loanRequest}
     {console.log(loanRequest)}
-    <a href="/loan-requests/{loanRequest.id}">
+    <a href="/loan-request/{loanRequest.id}">
     <div class="card">
       <div class="card-body">
 
