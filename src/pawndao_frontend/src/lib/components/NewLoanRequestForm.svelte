@@ -9,11 +9,21 @@
   function loanRequestSubmit(event) {
     // console.log(event.target.collateral_canister_id);
     // console.log(typeof(event.target.collateral_canister_id));
+    console.log(event);
     const collateral_canister_id = Principal.fromText(event.target.collateral_canister_id.value);
     const collateral_amount = Number(event.target.collateral_amount.value);
     // const desired_asset_canister_ids = event.target.desired_asset_canister_ids.value;
-    const desired_asset_canister_ids = [Principal.fromText(event.target.collateral_canister_id.value)];
-    // const desired_asset_canister_ids = [];
+    // const desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
+
+    // var desired_asset_canister_ids = [];
+    // if (event.target.desired_asset_canister_ids.checked == true) {
+    //   desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
+    // }
+
+    const desired_asset_canister_ids = Array.from(event.target.desired_asset_canister_ids)
+      .filter(radio => radio.checked)
+      .map(radio => Principal.fromText(radio.value));
+
     // const desired_amounts = event.target.desired_amounts.value;
     // const desired_amounts = [event.target.desired_amounts.value];
     const desired_amounts = [];
@@ -43,7 +53,7 @@
   <div class="xl:max-w-7xl drop-shadow-xl border border-black/20 w-full rounded-md flex justify-between items-stretch px-5 xl:px-5 py-5">
     <div class="mx-auto w-full lg:w-1/2 md:p-10 py-5 md:py-0">
       <h1 class="text-center text-2xl sm:text-3xl font-semibold text-[#4A07DA]">Create Loan Request</h1>
-      <form class="w-full mt-5 sm:mt-8" onsubmit={loanRequestSubmit}>
+      <form id="LoanRequestForm" class="w-full mt-5 sm:mt-8" onsubmit={loanRequestSubmit}>
         <div class="mx-auto w-full sm:max-w-md md:max-w-lg flex flex-col gap-5">
           <!-- Collateral Canister ID Input -->
           <div class="form-control">
@@ -73,19 +83,81 @@
             />
           </div>
 
-          <div class="form-control">
+          <div id="desiredAssets" class="form-control">
             <label class="label" for="desired_asset_canister_ids">
-              <span class="label-text">desired_asset_canister_ids</span>
+              <span class="label-text">Desired Asset</span>
             </label>
+            <!-- <input -->
+            <!--   type="text" -->
+            <!--   name="desired_asset_canister_ids" -->
+            <!--   id="desired_asset_canister_ids" -->
+            <!--   placeholder="Enter desired asset canister IDs" -->
+            <!--   class="input input-bordered input-primary w-full max-w-xs" -->
+            <!---->
+            <!-- /> -->
+            <label>
             <input
-              type="text"
+              type="checkbox"
+              placeholder="Enter desired asset canister IDs"
+              name="desired_asset_canister_ids_any"
+              class="checkbox"
+              onclick={(el)=>{console.log(el);
+                console.log(LoanRequestForm.desired_asset_canister_ids);
+                LoanRequestForm.desired_asset_canister_ids.forEach(function(checkbox) {
+                  checkbox.checked = false;
+                });
+              }}
+            /> Any</label>
+            <label>
+            <input
+              type="checkbox"
               name="desired_asset_canister_ids"
               id="desired_asset_canister_ids"
+              value="ryjl3-tyaaa-aaaaa-aaaba-cai"
               placeholder="Enter desired asset canister IDs"
-              class="input input-bordered input-primary w-full max-w-xs"
+              class="checkbox"
+              onclick={()=>{
+                LoanRequestForm.desired_asset_canister_ids_any.checked = false;
+              }}
 
-            />
+            /> ICP</label>
+            <label>
+            <input
+              type="checkbox"
+              name="desired_asset_canister_ids"
+              value="llcdy-4qaaa-aaaah-arcua-cai"
+              placeholder="Enter desired asset canister IDs"
+              class="checkbox"
+              onclick={()=>{
+                LoanRequestForm.desired_asset_canister_ids_any.checked = false;
+              }}
+
+            /> TPAWN</label>
           </div>
+
+          <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (because of reasons) -->
+          <span class="btn" role="button" tabindex="0"
+                onclick={()=> {
+                LoanRequestForm.desired_asset_canister_ids_any.checked = false;
+                var checkbox = document.createElement('input');
+                  checkbox.type = 'checkbox';
+                  checkbox.name = 'desired_asset_canister_ids';
+                  checkbox.value = 'llcdy-4qaaa-aaaah-arcua-cai';
+                  checkbox.id = 'checkbox1';
+                  checkbox.className = 'checkbox';
+                  checkbox.checked = true;
+                  checkbox.onclick = () => {LoanRequestForm.desired_asset_canister_ids_any.checked = false};
+
+                  desiredAssets.append(checkbox);
+                var input = document.createElement('input');
+                  input.type = 'text';
+                  input.name = 'desired_asset_canister_ids_input';
+                  input.value = 'llcdy-4qaaa-aaaah-arcua-cai';
+                  input.id = 'input1';
+                  input.className = 'input';
+                  desiredAssets.append(input); }}
+            >+ Asset
+          </span>
 
           <div class="form-control">
             <label class="label">
