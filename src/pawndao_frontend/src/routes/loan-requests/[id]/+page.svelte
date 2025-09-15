@@ -16,12 +16,34 @@
       <div class="card">
         <div class="card-body">
 
+          <div>
           <span>User: </span>
           <span>{data.loanRequest.user_id}</span>
+          <div class="divider"></div>
 
+          <span>collateral_canister_id: </span>
           <span>{data.loanRequest.collateral_canister_id}</span>
+          <div class="divider"></div>
+
+          <span>collateral_amount: </span>
           <span>{data.loanRequest.collateral_amount}</span>
+          <div class="divider"></div>
           
+          <span>desired_asset_canister_ids</span>
+          <span>{data.loanRequest.desired_asset_canister_ids}</span>
+          <div class="divider"></div>
+
+          <span>desired_amounts</span>
+          <span>{data.loanRequest.desired_amounts}</span>
+          <div class="divider"></div>
+
+          <span>desired_duration</span>
+          <span>{data.loanRequest.desired_duration}</span>
+          <div class="divider"></div>
+
+          <span>desired_interest</span>
+          <span>{data.loanRequest.desired_interest}</span>
+          </div>
         </div>
 
       </div>
