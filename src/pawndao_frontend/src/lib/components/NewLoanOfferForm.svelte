@@ -61,6 +61,29 @@
     });
     return false;
   }
+
+// Add this function to handle loanOfferNew
+  async function createLoanOffer() {
+    const form = document.getElementById("LoanRequestForm");
+    const loan_request_id = loan_request.id;
+    const loan_asset_canister_id = Principal.fromText(form.loan_asset_canister_id.value);
+    const loan_amount = Number(form.loan_amount.value);
+    const duration = Number(form.offer_duration.value);
+    const interest = Number(form.offer_interest.value);
+    try {
+      const offer = await backend.loanOfferNew(
+        loan_request_id,
+        loan_asset_canister_id,
+        loan_amount,
+        duration,
+        interest
+      );
+      notification = "Loan offer created!";
+      // greeting = JSON.stringify(offer);
+    } catch (e) {
+      notification = "Error creating loan offer: " + e;
+    }
+  }
 </script>
 
 {notification}
@@ -293,6 +316,71 @@
             <!--   Reset -->
             <!-- </button> -->
           </div>
+
+
+
+          <!-- New Loan Offer Inputs -->
+          <div class="mt-8 border-t pt-6">
+            <h2 class="text-lg font-semibold mb-2">Create Loan Offer</h2>
+            <div class="form-control mb-2">
+              <label class="label">
+                <span class="label-text">Loan Asset Canister ID</span>
+              </label>
+              <input
+                type="text"
+                name="loan_asset_canister_id"
+                placeholder="Enter canister ID"
+                class="input input-bordered input-primary w-full max-w-xs"
+                required
+              />
+            </div>
+            <div class="form-control mb-2">
+              <label class="label">
+                <span class="label-text">Loan Amount</span>
+              </label>
+              <input
+                type="number"
+                name="loan_amount"
+                placeholder="Enter loan amount"
+                class="input input-bordered input-primary w-full max-w-xs"
+                required
+              />
+            </div>
+            <div class="form-control mb-2">
+              <label class="label">
+                <span class="label-text">Duration (days)</span>
+              </label>
+              <input
+                type="number"
+                name="offer_duration"
+                placeholder="Enter duration in days"
+                class="input input-bordered input-primary w-full max-w-xs"
+                required
+              />
+            </div>
+            <div class="form-control mb-2">
+              <label class="label">
+                <span class="label-text">Interest (%)</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                name="offer_interest"
+                placeholder="Enter interest"
+                class="input input-bordered input-primary w-full max-w-xs"
+                required
+              />
+            </div>
+            <button type="button" class="btn btn-primary mt-2" onclick={createLoanOffer}>
+              Create Loan Offer
+            </button>
+          </div>
+
+
+
+
+
+
         </div>
       </form>
     </div>

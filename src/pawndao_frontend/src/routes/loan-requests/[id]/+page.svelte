@@ -5,7 +5,9 @@
 </script>
 
 <main>
-  {#if data.loanRequest}
+  {#if !data.loanRequest}
+    Not found
+  {:else}
     <a href="/loan-requests/{data.loanRequest.id}/offers/new">
       <span class="btn">Make Offer</span>
     </a>
@@ -15,7 +17,8 @@
     <a href="/loan-requests/{data.loanRequest.id}">
       <h1>Loan Request #{data.loanRequest.id}</h1>
     </a>
-    {console.log(data.loanRequest)}
+    <!-- {console.log(data.loanRequest)} -->
+    <!-- {console.log(data.loanOffers)} -->
       <div class="card">
         <div class="card-body">
 
@@ -50,7 +53,21 @@
         </div>
 
       </div>
-  {:else}
-    Not found
+
+      <div>
+        <h2>Loan Offers</h2>
+        {#each data.loanOffers as loan_offer}
+          <div class="card mb-4">
+            <div class="card-body">
+              <div><strong>Offer ID:</strong> {loan_offer.id}</div>
+              <div><strong>Lender:</strong> {loan_offer.user_id}</div>
+              <div><strong>Asset Canister ID:</strong> {loan_offer.loan_asset_canister_id}</div>
+              <div><strong>Amount:</strong> {loan_offer.loan_amount}</div>
+              <div><strong>Duration:</strong> {loan_offer.duration}</div>
+              <div><strong>Interest:</strong> {loan_offer.interest}</div>
+            </div>
+          </div>
+        {/each}
+      </div>
   {/if}
 </main>

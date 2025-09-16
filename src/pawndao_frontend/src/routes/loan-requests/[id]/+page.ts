@@ -7,9 +7,15 @@ export const load: PageLoad = async ({params}) => {
   const loanRequest = await backend.loanRequestByIdAsync(Number(params.id)).then((response) => {
     return response[0];
   });
+  // TODO a backend query for loanoffers by loanrequest id
+  const loanOffersAll = await backend.loanOffersAll().then((response) => {
+    return response;
+  });
+  const loanOffers = Array.from(loanOffersAll).filter((offer) => { return offer.loan_request_id === loanRequest.id });
   if (loanRequest  != null) {
 		return {
-      loanRequest: loanRequest
+      loanRequest: loanRequest,
+      loanOffers: loanOffers
 		};
 	}
 
