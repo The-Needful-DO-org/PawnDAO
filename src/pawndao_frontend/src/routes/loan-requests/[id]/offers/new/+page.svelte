@@ -1,11 +1,15 @@
 <script lang="ts">
-  import { backend } from "$lib/canisters";
+  // import { backend } from "$lib/canisters";
   import type { PageProps } from './$types';
+  import NewLoanOfferForm from '$lib/components/NewLoanOfferForm.svelte';
 	let { data }: PageProps = $props();
 </script>
 
 <main>
   {#if data.loanRequest}
+
+    <NewLoanOfferForm loan_request={data.loanRequest} />
+
     <a href="/loan-requests/{data.loanRequest.id}/offers/new">
       <span class="btn">Make Offer</span>
     </a>
