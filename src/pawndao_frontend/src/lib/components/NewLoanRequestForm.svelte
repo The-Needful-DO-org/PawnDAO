@@ -5,8 +5,11 @@
   import { Principal } from "@dfinity/principal";
   let greeting = $state("");
   let notification = $state("");
+  let desired_assets = $state([]);
+
 
   function loanRequestSubmit(event) {
+    event.preventDefault();
     // console.log(event.target.collateral_canister_id);
     // console.log(typeof(event.target.collateral_canister_id));
     console.log(event);
@@ -26,7 +29,10 @@
 
     // const desired_amounts = event.target.desired_amounts.value;
     // const desired_amounts = [event.target.desired_amounts.value];
-    const desired_amounts = [];
+    var desired_amounts = [];
+    if (desired_assets.length > 0 && event.target.desired_amounts.value.length > 0) {
+      desired_amounts = [[Principal.fromText(desired_assets[0]), BigInt(event.target.desired_amounts.value)]];
+    }
     const desired_duration = Number(event.target.desired_duration.value);
     const desired_interest = Number(event.target.desired_interest.value);
     backend.loanRequestNew(
@@ -48,6 +54,7 @@
 
 {notification}
 {greeting}
+{desired_assets}
 
 <div class="flex justify-center items-center w-full min-h-screen px-5 py-5">
   <div class="xl:max-w-7xl drop-shadow-xl border border-black/20 w-full rounded-md flex justify-between items-stretch px-5 xl:px-5 py-5">
@@ -58,15 +65,39 @@
           <!-- Collateral Canister ID Input -->
           <div class="form-control">
             <label class="label">
-              <span class="label-text">Collateral Canister ID</span>
+              <span class="label-text">Collateral</span>
             </label>
-            <input
-              type="text"
-              name="collateral_canister_id"
-              placeholder="Enter canister ID"
-              class="input input-bordered input-primary w-full max-w-xs"
-              required
-            />
+            <!-- <input -->
+            <!--   type="text" -->
+            <!--   name="collateral_canister_id" -->
+            <!--   placeholder="Enter canister ID" -->
+            <!--   class="input input-bordered input-primary w-full max-w-xs" -->
+            <!--   required -->
+            <!-- /> -->
+            <div class="filter">
+              <input class="btn btn-square filter-reset" type="radio" name="collateral_canister_id" value="×" aria-label="×" 
+                onclick={() => {
+                      LoanRequestForm.collateral_canister_id.forEach(function(radio) {
+                        radio.checked = false;
+                      });
+                    }}
+                />
+              <input id="icp-btn" class="btn" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
+              <input class="btn" type="radio" name="collateral_canister_id" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" required />
+            </div>
           </div>
 
           <!-- Collateral Amount Input -->
@@ -85,8 +116,12 @@
 
           <div id="desiredAssets" class="form-control">
             <label class="label" for="desired_asset_canister_ids">
-              <span class="label-text">Desired Asset</span>
+              <span class="label-text">Desired Asset: </span>
             </label>
+              {#if desired_assets.length < 1}
+                <span>Any</span>
+              {/if}
+            <!-- single text input for debugging -->
             <!-- <input -->
             <!--   type="text" -->
             <!--   name="desired_asset_canister_ids" -->
@@ -95,81 +130,116 @@
             <!--   class="input input-bordered input-primary w-full max-w-xs" -->
             <!---->
             <!-- /> -->
-            <label>
-            <input
-              type="checkbox"
-              placeholder="Enter desired asset canister IDs"
-              name="desired_asset_canister_ids_any"
-              class="checkbox"
-              onclick={(el)=>{console.log(el);
-                console.log(LoanRequestForm.desired_asset_canister_ids);
-                LoanRequestForm.desired_asset_canister_ids.forEach(function(checkbox) {
-                  checkbox.checked = false;
-                });
-              }}
-            /> Any</label>
-            <label>
-            <input
-              type="checkbox"
-              name="desired_asset_canister_ids"
-              id="desired_asset_canister_ids"
-              value="ryjl3-tyaaa-aaaaa-aaaba-cai"
-              placeholder="Enter desired asset canister IDs"
-              class="checkbox"
-              onclick={()=>{
-                LoanRequestForm.desired_asset_canister_ids_any.checked = false;
-              }}
 
-            /> ICP</label>
-            <label>
-            <input
-              type="checkbox"
-              name="desired_asset_canister_ids"
-              value="llcdy-4qaaa-aaaah-arcua-cai"
-              placeholder="Enter desired asset canister IDs"
-              class="checkbox"
-              onclick={()=>{
-                LoanRequestForm.desired_asset_canister_ids_any.checked = false;
-              }}
-
-            /> TPAWN</label>
-          </div>
-
+            <!-- proof of concept multiple checkboxes -->
+          <!--   <label> -->
+          <!--   <input -->
+          <!--     type="checkbox" -->
+          <!--     placeholder="Enter desired asset canister IDs" -->
+          <!--     name="desired_asset_canister_ids_any" -->
+          <!--     class="checkbox" -->
+          <!--     onclick={(el)=>{console.log(el); -->
+          <!--       console.log(LoanRequestForm.desired_asset_canister_ids); -->
+          <!--       LoanRequestForm.desired_asset_canister_ids.forEach(function(checkbox) { -->
+          <!--         checkbox.checked = false; -->
+          <!--       }); -->
+          <!--     }} -->
+          <!--   /> Any</label> -->
+          <!--   <label> -->
+          <!--   <input -->
+          <!--     type="checkbox" -->
+          <!--     name="desired_asset_canister_ids" -->
+          <!--     id="desired_asset_canister_ids" -->
+          <!--     value="ryjl3-tyaaa-aaaaa-aaaba-cai" -->
+          <!--     placeholder="Enter desired asset canister IDs" -->
+          <!--     class="checkbox" -->
+          <!--     onclick={()=>{ -->
+          <!--       LoanRequestForm.desired_asset_canister_ids_any.checked = false; -->
+          <!--     }} -->
+          <!---->
+          <!--   /> ICP</label> -->
+          <!--   <label> -->
+          <!--   <input -->
+          <!--     type="checkbox" -->
+          <!--     name="desired_asset_canister_ids" -->
+          <!--     value="llcdy-4qaaa-aaaah-arcua-cai" -->
+          <!--     placeholder="Enter desired asset canister IDs" -->
+          <!--     class="checkbox" -->
+          <!--     onclick={()=>{ -->
+          <!--       LoanRequestForm.desired_asset_canister_ids_any.checked = false; -->
+          <!--     }} -->
+          <!---->
+          <!--   /> TPAWN</label> -->
+          <!-- </div> -->
+          <!---->
           <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions (because of reasons) -->
-          <span class="btn" role="button" tabindex="0"
-                onclick={()=> {
-                LoanRequestForm.desired_asset_canister_ids_any.checked = false;
-                var checkbox = document.createElement('input');
-                  checkbox.type = 'checkbox';
-                  checkbox.name = 'desired_asset_canister_ids';
-                  checkbox.value = 'llcdy-4qaaa-aaaah-arcua-cai';
-                  checkbox.id = 'checkbox1';
-                  checkbox.className = 'checkbox';
-                  checkbox.checked = true;
-                  checkbox.onclick = () => {LoanRequestForm.desired_asset_canister_ids_any.checked = false};
+          <!-- <span class="btn" role="button" tabindex="0" -->
+          <!--       onclick={()=> { -->
+          <!--       LoanRequestForm.desired_asset_canister_ids_any.checked = false; -->
+          <!--       var checkbox = document.createElement('input'); -->
+          <!--         checkbox.type = 'checkbox'; -->
+          <!--         checkbox.name = 'desired_asset_canister_ids'; -->
+          <!--         checkbox.value = 'llcdy-4qaaa-aaaah-arcua-cai'; -->
+          <!--         checkbox.id = 'checkbox1'; -->
+          <!--         checkbox.className = 'checkbox'; -->
+          <!--         checkbox.checked = true; -->
+          <!--         checkbox.onclick = () => {LoanRequestForm.desired_asset_canister_ids_any.checked = false}; -->
+          <!---->
+          <!--         desiredAssets.append(checkbox); -->
+          <!--       var input = document.createElement('input'); -->
+          <!--         input.type = 'text'; -->
+          <!--         input.name = 'desired_asset_canister_ids_input'; -->
+          <!--         input.value = 'llcdy-4qaaa-aaaah-arcua-cai'; -->
+          <!--         input.id = 'input1'; -->
+          <!--         input.className = 'input'; -->
+          <!--         desiredAssets.append(input); }} -->
+          <!--   >+ Asset -->
+          <!-- </span> -->
 
-                  desiredAssets.append(checkbox);
-                var input = document.createElement('input');
-                  input.type = 'text';
-                  input.name = 'desired_asset_canister_ids_input';
-                  input.value = 'llcdy-4qaaa-aaaah-arcua-cai';
-                  input.id = 'input1';
-                  input.className = 'input';
-                  desiredAssets.append(input); }}
-            >+ Asset
-          </span>
+              <!-- use filter to enforce max 1 desired asset -->
+              <!-- <div> -->
+              <div class="filter">
+                <input class="btn btn-square filter-reset" type="button" name="reset_desired_asset_canister_ids" value="×" aria-label="×"
+                onclick={() => {
+                      desired_assets = [];
+                      // LoanRequestForm.desired_asset_canister_ids.forEach(function(checkbox) {
+                        // checkbox.checked = false;
+                      // });
+                    }}
+                />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" />
+            </div>
+          </div>
 
           <div class="form-control">
             <label class="label">
-              <span class="label-text">desired_amounts</span>
+              <span class="label-text">Desired Amount: </span>
             </label>
-            <input
-              type="text"
-              name="desired_amounts"
-              placeholder="Enter desired asset amounts"
-              class="input input-bordered input-primary w-full max-w-xs"
+            {#if desired_assets.length > 0}
+              <input
+                type="text"
+                name="desired_amounts"
+                placeholder="Enter desired asset amount (optional)"
+                class="input input-bordered input-primary w-full max-w-xs"
 
-            />
+              />
+            {:else}
+              <span>Any</span>
+            {/if}
           </div>
 
           <!-- Duration Input -->
