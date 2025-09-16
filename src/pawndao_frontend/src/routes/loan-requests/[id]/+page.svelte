@@ -2,6 +2,17 @@
   import { backend } from "$lib/canisters";
   import type { PageProps } from './$types';
 	let { data }: PageProps = $props();
+
+  // Handler to accept a loan offer via loanOfferAccept
+  async function loanOfferAccept(offerId) {
+    try {
+      await backend.loanOfferAccept(offerId);
+      alert("Loan offer accepted!");
+      // Optionally refresh data or update UI here
+    } catch (e) {
+      alert("Error accepting loan offer: " + e);
+    }
+  }
 </script>
 
 <main>
@@ -41,8 +52,6 @@
 
           <span>desired_amounts</span>
           <span>{data.loanRequest.desired_amounts}</span>
-          <div class="divider"></div>
-
           <span>desired_duration</span>
           <span>{data.loanRequest.desired_duration}</span>
           <div class="divider"></div>
@@ -65,6 +74,9 @@
               <div><strong>Amount:</strong> {loan_offer.loan_amount}</div>
               <div><strong>Duration:</strong> {loan_offer.duration}</div>
               <div><strong>Interest:</strong> {loan_offer.interest}</div>
+              <button class="btn btn-success mt-3" on:click={() => loanOfferAccept(loan_offer.id)}>
+                Accept Offer
+              </button>
             </div>
           </div>
         {/each}
