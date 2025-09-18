@@ -123,4 +123,18 @@ dfx --identity pawn_loaner ledger balance
 echo "Lender TPAWN balance:"
 dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "527hb-qvt5w-dekj5-hmae5-jxhgs-vqo7l-jenzt-4ovjb-hi7yr-7ujgd-nae";    subaccount = null; }, )'
 
+# offer with duration of zero
+dfx --identity pawn_loaner canister call pawndao_backend loanOfferNew '(
+  0 : nat,
+  principal "ryjl3-tyaaa-aaaaa-aaaba-cai",
+  1_000_000_000 : nat,
+  0 : nat,
+  1.1 : float64,
+)'
+
+echo "Accept Loan Offer zero duration"
+dfx canister call pawndao_backend loanOfferAccept 2
+
+echo "Default Loan zero duration"
+dfx --identity pawn_loaner canister call pawndao_backend loanDefault 1
 

@@ -633,6 +633,10 @@ public type Loan = {
 
   };
 
+  public query func loansAll() : async [Loan] {
+    return Iter.toArray(Map.values(idLoansMap));
+  };
+
   public query func loanById(loan_id: Nat) : async ?Loan {
     return Map.get(idLoansMap, Nat.compare, loan_id);
   };
@@ -688,20 +692,25 @@ public type Loan = {
   };
 
   public shared(msg) func loanDefault(loan_id: Nat) : async ?Loan {
-    let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else return null;
+    let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else throw Error.reject("Loan not found");
 
-    // Only lender can call this
-    if (loan.lender_user_id != msg.caller) { throw Error.reject("Only lender can default loan") };
+    // TODO validate loan, status, transactions, etc...
+    // TODO return Response instead of error
+    if (loan.lender_user_id != msg.caller) { throw Error.reject("You are not the Lender") };
+    if (loan.status == #Repaid) { throw Error.reject("Loan already Repaid") };
+    if (loan.status == #Defaulted) { throw Error.reject("Loan already Defaulted") };
+    if (loan.status == #Cancelled) { throw Error.reject("Loan already Cancelled") };
+    if (loan.status != #Active) { throw Error.reject("Loan status is not Active") };
 
-    // Validate loan status and permissions
-    if (loan.status == #Defaulted) { throw Error.reject("Loan already defaulted") };
-    if (loan.status == #Repaid) { throw Error.reject("Loan already repaid") };
-    if (loan.status == #Cancelled) { throw Error.reject("Loan is cancelled") };
+    // validate timestamp vs end time
+    let oneDay : Int = 24 * 60 * 60 * 1_000_000_000;
+    let endtime = loan.timestamp + loan.duration * oneDay;
+    if (Time.now() < endtime) { throw Error.reject("Loan time not expired"); };
 
-    // Transfer collateral to lender
+     // transfer the collateral to the lender
     let collateral_token : ICRC.Actor = actor (Principal.toText(loan.collateral_canister_id));
     let collateral_token_fee = await collateral_token.icrc1_fee();
-    let collateral_transfer_result = await collateral_token.icrc2_transfer_from({
+    let loan_default_collateral_transfer_result = await collateral_token.icrc2_transfer_from({
           spender_subaccount = null;
           from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
           to = { owner = loan.lender_user_id; subaccount = null };
@@ -711,9 +720,24 @@ public type Loan = {
           created_at_time = null;
         });
 
-    // TODO: validate collateral_transfer_result
+    // TODO validate loan_default_collateral_transfer_result
+    // validate loan_default_collateral_transfer_result
+   // Check that the transfer was successful.
+   let loan_default_transfer_block_height = switch (loan_default_collateral_transfer_result) {
+     case (#Ok(block_height)) {
+         block_height;
+       };
+     case (#Err(err)) {
+       // Transfer failed. There's no cleanup for us to do since no state has
+       // changed, so we can just wrap and return the error to the frontend.
+       // TODO define return type instead of throw Result.Result<Loan, LoanOfferAcceptError> {
+       // return #err(#TransferFromError(err));
+       // TODO log error for review
+       throw Error.reject("Defaulted collateral transfer error: " # debug_show(err) );
+     };
+   };
 
-    // Update loan status
+    // update Loan status, record of default
     let modified_loan = { loan with status = #Defaulted };
     Map.add(idLoansMap, Nat.compare, modified_loan.id, modified_loan);
 
