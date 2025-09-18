@@ -141,7 +141,10 @@ public query func loanRequestsAll() : async [LoanRequest] {
 
 type LoanOfferStatus = {
   #Pending;
+  #Collateralized;
+  #Lended;
   #Accepted;
+  #Rejected;
   #Cancelled;
   // #Banned : Text; // Optionally carry extra data, like a reason
 };
@@ -269,9 +272,237 @@ public type Loan = {
     a.id == b.id
   };
 
+  func loanOfferSetStatus(loan_offer: LoanOffer, new_status: LoanOfferStatus) : LoanOffer {
+     let modified_loan_offer = { loan_offer with status = new_status };
+     let loan_offers = switch (Map.get(userLoanOffers, Principal.compare, loan_offer.user_id)) {
+       case (?list) list;
+       case null List.empty<LoanOffer>();
+     };
+     // let updated_loan_offers = List.set(loan_offers, 0, modified_loan_offer );
+     let loan_offer_index = List.indexOf<LoanOffer>(loan_offers, loanOfferEqualById, loan_offer ); // else throw Error.reject("Loan Offer index not found");
+     switch (loan_offer_index) {
+       case (null) { return loan_offer }; // do nothing
+       case (?loan_offer_index) {
+         List.put(loan_offers, loan_offer_index, modified_loan_offer );
+         Map.add(userLoanOffers, Principal.compare, loan_offer.user_id, loan_offers);
+         return modified_loan_offer;
+       };
+     };
+  };
+
+  func loanOfferGetSync(loan_offer_id : Nat) : LoanOffer {
+    var maybe_loan_offer : ?LoanOffer = null;
+    for ((_, l) in Map.entries(userLoanOffers)) { // iterator over entries [[Map entries](https://internetcomputer.org/docs/motoko/core/Map#function-entries)]
+      let va = List.toVarArray<LoanOffer>(l);    // List<T> -> [var T] [[List toVarArray](https://internetcomputer.org/docs/motoko/core/List#function-tovararray)]
+      let a = Array.fromVarArray<LoanOffer>(va);  // [var T] -> [T] [[fromVarArray](https://internetcomputer.org/docs/motoko/core/List#function-fromvararray)]
+      List.forEach<LoanOffer>(l, func (offer) {
+        if (offer.id == loan_offer_id ) {
+          maybe_loan_offer := ?offer;
+        }
+      });
+    };
+    let ?loan_offer = maybe_loan_offer;
+    return loan_offer;
+  };
+
+  public shared(msg) func loanOfferCollateralWithdraw(
+    loan_offer_id : Nat,
+    ) : async LoanOffer {
+    let loan_offer = loanOfferGetSync(loan_offer_id);
+    if (loan_offer.status != #Collateralized) { throw Error.reject("Loan Offer status not Collateralized") };
+
+    // TODO ensure atomicity
+    // let loan_request_maybe = loanRequestById(loan_offer.loan_request_id);
+    let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
+    // validate caller is loan requester
+    if (loan_request.user_id != msg.caller) { throw Error.reject("You are not the loan requester") };
+
+    // Perform the transfer, to withdraw the tokens.
+    // TODO check for balance and allowance?
+    // TODO use token-handler https://github.com/research-ag/token-handler/blob/main/example/main.mo
+    let collateral_token : ICRC.Actor = actor (Principal.toText(loan_request.collateral_canister_id));
+    let collateral_token_fee = await collateral_token.icrc1_fee();
+    let collateral_withdraw_transfer_result = await collateral_token.icrc2_transfer_from({
+      spender_subaccount = null;
+      from = { owner = Principal.fromActor(PawnDAO); subaccount = null };
+      to = { owner = msg.caller; subaccount = null};
+      amount = loan_request.collateral_amount - collateral_token_fee;
+      fee = null;
+      memo = null;
+      created_at_time = null;
+    });
+
+   // validate collateral_transfer_result 
+      // Check that the transfer was successful.
+      let collateral_withdraw_block_height = switch (collateral_withdraw_transfer_result ) {
+        case (#Ok(block_height)) {
+            // set status of Loan Offer to collateralized
+            ignore loanOfferSetStatus(loan_offer, #Pending);
+            block_height;
+          };
+        case (#Err(err)) {
+          // Transfer failed. There's no cleanup for us to do since no state has
+          // changed, so we can just wrap and return the error to the frontend.
+          // TODO define return type insteadbof throw Result.Result<Loan, LoanOfferAcceptError> {
+          // return #err(#TransferFromError(err));
+          throw Error.reject("Collateral withdraw transfer error: " # debug_show(err) );
+        };
+      };
+ 
+    // return loan_offer;
+    return loanOfferGetSync(loan_offer_id);
+  };
+
+  // This is for a LoanOffer which has been collateralized by the Requester
+  // But funding by the lender failed, for example if the Lender lacks funds
+  // when the Requester accepts the offer
+  // This function allows the lender to fund the offer and create the Loan
+  public shared(msg) func loanOfferFundLoan(
+    loan_offer_id : Nat,
+    ) : async LoanOffer {
+    let loan_offer = loanOfferGetSync(loan_offer_id);
+    if (loan_offer.status != #Collateralized) { throw Error.reject("Loan Offer status not Collateralized") };
+
+    // TODO ensure atomicity
+    // let loan_request_maybe = loanRequestById(loan_offer.loan_request_id);
+    let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
+    // validate caller is loan requester
+    if (loan_offer.user_id != msg.caller) { throw Error.reject("You are not the lender") };
+
+    // Perform the transfer, to fund the loan
+    // TODO check for balance and allowance?
+    // TODO use token-handler https://github.com/research-ag/token-handler/blob/main/example/main.mo
+    let loan_token : ICRC.Actor = actor (Principal.toText(loan_offer.loan_asset_canister_id ));
+    let loan_token_fee = await loan_token.icrc1_fee();
+    let loan_transfer_result = await loan_token.icrc2_transfer_from({
+      spender_subaccount = null;
+      from = { owner = loan_offer.user_id; subaccount = null};
+      to = { owner = loan_request.user_id; subaccount = null };
+      amount = loan_offer.loan_amount;
+      fee = null;
+      memo = null;
+      created_at_time = null;
+    });
+
+    // validate loan_transfer_result 
+    // Check that the transfer was successful.
+    let loan_transfer_block_height = switch (loan_transfer_result) {
+      case (#Ok(block_height)) {
+          // set status of Loan Offer to collateralized
+          ignore loanOfferSetStatus(loan_offer, #Lended);
+          // TODO create loan
+          block_height;
+        };
+      case (#Err(err)) {
+        // Transfer failed. There's no cleanup for us to do since no state has
+        // changed, so we can just wrap and return the error to the frontend.
+        // TODO define return type insteadbof throw Result.Result<Loan, LoanOfferAcceptError> {
+        // return #err(#TransferFromError(err));
+        throw Error.reject("Lending transfer error: " # debug_show(err) );
+      };
+    };
+
+    // Maybe move this to the transfer validation block?
+    // create Loan
+    let new_loan = {
+      id : Nat = nextLoanId;
+      loan_request_id : Nat = loan_request.id;
+      loan_offer_id : Nat = loan_offer.id;
+      borrower_user_id : Principal = loan_request.user_id;
+      lender_user_id : Principal = loan_offer.user_id;
+      collateral_canister_id : Principal = loan_request.collateral_canister_id;
+      collateral_amount : Nat = loan_request.collateral_amount;
+      loan_asset_canister_id : Principal = loan_offer.loan_asset_canister_id;
+      loan_amount : Nat = loan_offer.loan_amount;
+      duration : Nat = loan_offer.duration;
+      interest : Float = loan_offer.interest;
+      timestamp : Int = Time.now();
+      status : LoanStatus = #Active;
+    };
+
+    Map.add(idLoansMap, Nat.compare, new_loan.id, new_loan);
+    nextLoanId += 1;
+
+    // update LoanOffer status
+    ignore loanOfferSetStatus(loan_offer, #Accepted );
+ 
+    // return loan_offer;
+    return loanOfferGetSync(loan_offer_id);
+  };
+
+  public shared(msg) func loanOfferReject(
+    loan_offer_id : Nat,
+    ) : async LoanOffer {
+    let loan_offer = loanOfferGetSync(loan_offer_id);
+    if (loan_offer.status != #Pending) { throw Error.reject("Loan Offer status not Pending") };
+
+    // TODO ensure atomicity
+    // let loan_request_maybe = loanRequestById(loan_offer.loan_request_id);
+    let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
+    // validate caller is loan requester
+    if (loan_request.user_id != msg.caller) { throw Error.reject("You are not the borrower") };
+    let modified_loan_offer = loanOfferSetStatus(loan_offer, #Rejected);
+
+    return modified_loan_offer;
+  };
+
+  public shared(msg) func loanOfferCancel(
+    loan_offer_id : Nat,
+    ) : async LoanOffer {
+    let loan_offer = loanOfferGetSync(loan_offer_id);
+    if (loan_offer.status != #Pending and loan_offer.status != #Collateralized) { throw Error.reject("Loan Offer status not Pending or Collateralized") };
+
+    // TODO ensure atomicity
+    // let loan_request_maybe = loanRequestById(loan_offer.loan_request_id);
+    let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
+    // validate caller is loan requester
+    if (loan_offer.user_id != msg.caller) { throw Error.reject("You are not the lender") };
+
+
+    if (loan_offer.status == #Collateralized) { 
+      // Perform the transfer, to withdraw the collateral tokens
+      // TODO check for balance and allowance?
+      // TODO use token-handler https://github.com/research-ag/token-handler/blob/main/example/main.mo
+      let collateral_token : ICRC.Actor = actor (Principal.toText(loan_request.collateral_canister_id));
+      let collateral_token_fee = await collateral_token.icrc1_fee();
+      let collateral_withdraw_transfer_result = await collateral_token.icrc2_transfer_from({
+          spender_subaccount = null;
+          from = { owner = Principal.fromActor(PawnDAO); subaccount = null };
+          to = { owner = msg.caller; subaccount = null};
+          amount = loan_request.collateral_amount - collateral_token_fee;
+          fee = null;
+          memo = null;
+          created_at_time = null;
+          });
+
+      // validate collateral_transfer_result 
+      // Check that the transfer was successful.
+      let collateral_withdraw_block_height = switch (collateral_withdraw_transfer_result ) {
+        case (#Ok(block_height)) {
+          // ignore loanOfferSetStatus(loan_offer, #Cancelled);
+          block_height;
+        };
+        case (#Err(err)) {
+          // Transfer failed. There's no cleanup for us to do since no state has
+          // changed, so we can just wrap and return the error to the frontend.
+          // TODO define return type insteadbof throw Result.Result<Loan, LoanOfferAcceptError> {
+          // return #err(#TransferFromError(err));
+          // TODO log error for review
+          throw Error.reject("Collateral withdraw transfer error: " # debug_show(err) );
+        };
+      };
+
+
+    };
+
+    let modified_loan_offer = loanOfferSetStatus(loan_offer, #Cancelled);
+
+    return modified_loan_offer;
+  };
+
   public shared(msg) func loanOfferAccept(
     loan_offer_id : Nat,
-) : async ?Loan {
+  ) : async ?Loan {
     let caller = msg.caller; // Replace with `Principal.fromCaller()` for real user
     var loan_offer : ?LoanOffer = null;
     for ((_, l) in Map.entries(userLoanOffers)) { // iterator over entries [[Map entries](https://internetcomputer.org/docs/motoko/core/Map#function-entries)]
@@ -300,6 +531,7 @@ public type Loan = {
        if (loan_request.user_id != msg.caller) { throw Error.reject("You are not the loan requester") };
 
        // Perform the transfer, to capture the tokens.
+       // TODO check for balance and allowance?
        // TODO use token-handler https://github.com/research-ag/token-handler/blob/main/example/main.mo
        let token : ICRC.Actor = actor (Principal.toText(loan_request.collateral_canister_id));
        let collateral_transfer_result = await token.icrc2_transfer_from({
@@ -312,7 +544,23 @@ public type Loan = {
          created_at_time = null;
        });
 
-       // TODO validate collateral_transfer_result 
+       // validate collateral_transfer_result 
+      // Check that the transfer was successful.
+      let collateral_block_height = switch (collateral_transfer_result) {
+        case (#Ok(block_height)) {
+            // set status of Loan Offer to collateralized
+            ignore loanOfferSetStatus(loan_offer, #Collateralized);
+            block_height;
+          };
+        case (#Err(err)) {
+          // Transfer failed. There's no cleanup for us to do since no state has
+          // changed, so we can just wrap and return the error to the frontend.
+          // TODO define return type insteadbof throw Result.Result<Loan, LoanOfferAcceptError> {
+          // return #err(#TransferFromError(err));
+          throw Error.reject("Collateral transfer error: " # debug_show(err) );
+        };
+      };
+       
 
        // TODO distribute loan 
        let loan_token : ICRC.Actor = actor (Principal.toText(loan_offer.loan_asset_canister_id ));
@@ -327,7 +575,24 @@ public type Loan = {
        });
 
        // TODO validate loan_transfer_result 
-       // TODO create Loan
+       // validate loan_transfer_result
+      // Check that the transfer was successful.
+      let loan_transfer_block_height = switch (loan_transfer_result) {
+        case (#Ok(block_height)) {
+            // set status of Loan Offer to collateralized
+            ignore loanOfferSetStatus(loan_offer, #Lended);
+            block_height;
+          };
+        case (#Err(err)) {
+          // Transfer failed. There's no cleanup for us to do since no state has
+          // changed, so we can just wrap and return the error to the frontend.
+          // TODO define return type insteadbof throw Result.Result<Loan, LoanOfferAcceptError> {
+          // return #err(#TransferFromError(err));
+          throw Error.reject("Lending transfer error: " # debug_show(err) );
+        };
+      };
+ 
+       // create Loan
        let new_loan = {
          id : Nat = nextLoanId;
          loan_request_id : Nat = loan_request.id;
@@ -403,12 +668,12 @@ public type Loan = {
 
      // return the collateral
     let collateral_token : ICRC.Actor = actor (Principal.toText(loan.collateral_canister_id));
-    let collateral_transfer_fee = 10_000; // TODO dynamic fee
+    let collateral_token_fee = await collateral_token.icrc1_fee();
     let loan_return_collateral_transfer_result = await collateral_token.icrc2_transfer_from({
           spender_subaccount = null;
           from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
           to = { owner = loan.borrower_user_id; subaccount = null };
-          amount = loan.collateral_amount - collateral_transfer_fee;
+          amount = loan.collateral_amount - collateral_token_fee;
           fee = null;
           memo = null;
           created_at_time = null;
@@ -435,12 +700,12 @@ public type Loan = {
 
     // Transfer collateral to lender
     let collateral_token : ICRC.Actor = actor (Principal.toText(loan.collateral_canister_id));
-    let collateral_transfer_fee = 10_000; // TODO dynamic fee
+    let collateral_token_fee = await collateral_token.icrc1_fee();
     let collateral_transfer_result = await collateral_token.icrc2_transfer_from({
           spender_subaccount = null;
           from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
           to = { owner = loan.lender_user_id; subaccount = null };
-          amount = loan.collateral_amount - collateral_transfer_fee;
+          amount = loan.collateral_amount - collateral_token_fee;
           fee = null;
           memo = null;
           created_at_time = null;
