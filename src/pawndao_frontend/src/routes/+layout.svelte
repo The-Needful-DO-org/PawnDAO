@@ -6,10 +6,27 @@
  //  import { page } from '$app/state'
  //  import { backend } from "$lib/canisters";
  //  import { auth, getIdentityProvider } from "$lib/../stores/auth";
- //  import { onMount } from "svelte";
+ import { onMount } from "svelte";
  //  import { tick } from 'svelte';
 	let { children } = $props();
   import Navbar from "$lib/components/Navbar.svelte";
+
+  onMount(() => {
+
+    if (process.env.DFX_NETWORK !== "ic") {
+      const script = document.createElement('script');
+      script.onload = () => {
+        if (eruda) {
+          eruda.init();
+        }
+      };
+      script.src = 'https://cdn.jsdelivr.net/npm/eruda';
+      document.head.appendChild(script);
+    }
+
+  });
+
+
 
 </script>
 

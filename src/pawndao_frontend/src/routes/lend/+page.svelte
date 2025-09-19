@@ -7,7 +7,10 @@
 <main>
   <h1>Lending</h1>
   <h2>Loan Requests</h2>
-  {#each data.loanRequests as loanRequest}
+  {#await data.loanRequests}
+  loading...
+  {:then loanRequests}
+  {#each loanRequests as loanRequest}
     {console.log(loanRequest)}
     <a href="/loan-requests/{loanRequest.id}">
     <div class="card">
@@ -24,4 +27,5 @@
     </div>
     </a>
   {/each}
+  {/await}
 </main>
