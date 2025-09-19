@@ -138,3 +138,4 @@ dfx canister call pawndao_backend loanOfferAccept 2
 echo "Default Loan zero duration"
 dfx --identity pawn_loaner canister call pawndao_backend loanDefault 1
 
+sh ./scripts/test_anon_loans.sh

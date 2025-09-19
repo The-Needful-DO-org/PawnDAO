@@ -15,3 +15,12 @@
 .browser-warning {
   display: none;
 }
+
+#icp-btn::after {
+  content: attr(aria-label);
+  padding-left: 2em;
+  background-image: url('/images/icp.gif');
+  background-size: 1em 1em;
+  background-repeat: no-repeat;
+}
+

@@ -25,6 +25,18 @@
     refreshLoans();
   }
 
+  // Handler to default a loan via loanDefault
+  async function loanDefault(loan_id: BigInt) {
+    try {
+      await backend.loanDefault(loan_id);
+      alert("Loan defaulted!");
+      // Optionally refresh data or update UI here
+    } catch (e) {
+      alert("Error defaulting loan: " + e);
+    }
+    refreshLoans();
+  }
+
 </script>
 
 <main>
@@ -79,9 +91,9 @@
           Repay Loan
         </button>
 
-        <!-- <button class="btn btn-success mt-3" onclick={() => loanDefault(loan.id)}> -->
-        <!--   Default Loan -->
-        <!-- </button> -->
+        <button class="btn btn-secondary mt-3" onclick={() => loanDefault(loan.id)}>
+          Default Loan
+        </button>
 
       </div>
 

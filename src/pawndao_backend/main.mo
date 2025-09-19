@@ -642,13 +642,19 @@ public type Loan = {
   };
 
   public shared(msg) func loanRepay(loan_id: Nat) : async ?Loan {
-    let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else return null; // TODO Result with message if loan not found
+    let ?loan = Map.get(idLoansMap, Nat.compare, loan_id) else throw Error.reject("Loan not found") ;
 
     // TODO validate loan, status, transactions, etc...
     // TODO return Response instead of error
     if (loan.borrower_user_id != msg.caller) { throw Error.reject("Not your loan") };
     if (loan.status == #Repaid) { throw Error.reject("Loan already repaid") };
     if (loan.status == #Cancelled) { throw Error.reject("Loan is cancelled") };
+    if (loan.status != #Active) { throw Error.reject("Loan status is not Active") };
+
+    // validate timestamp vs end time
+    let oneDay : Int = 24 * 60 * 60 * 1_000_000_000;
+    let endtime = loan.timestamp + loan.duration * oneDay;
+    if (Time.now() >= endtime) { throw Error.reject("Loan time expired"); };
 
     let amount_to_repay_float = (Float.fromInt(Nat.toInt(loan.loan_amount)) * (1.0 + loan.interest / 100.0));
     // let amount_to_repay = (1000000000 * (1.0 + 1.1 / 100.0));
