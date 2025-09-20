@@ -40,8 +40,8 @@
 </script>
 
 <main>
-  <h1>Lending</h1>
-  <h2>Loan Requests</h2>
+  <h1>Loans</h1>
+  <!-- <h2>Loan Requests</h2> -->
   {#each loans as loan}
     <div class="card">
       <div class="card-body">

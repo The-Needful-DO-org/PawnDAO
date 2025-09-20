@@ -3,13 +3,13 @@ import type { PageLoad } from './$types';
 import { backend } from "$lib/canisters";
 import { HttpAgent } from "@dfinity/agent";
 
-if (process.env.DFX_NETWORK !== "ic") {
-// Only in local/dev, never on mainnet:
-  const agent = new HttpAgent({ /* no identity = anonymous */ });
-  await agent.fetchRootKey();
-}
 
 async function getLoanRequests() {
+  if (process.env.DFX_NETWORK !== "ic") {
+  // Only in local/dev, never on mainnet:
+    const agent = new HttpAgent({ /* no identity = anonymous */ });
+    await agent.fetchRootKey();
+  }
   // const loanRequests = await backend.loanRequestsAll();
   const loanRequests = await backend.loanRequestsAll().then((response) => {
     return response;

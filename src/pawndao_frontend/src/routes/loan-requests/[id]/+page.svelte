@@ -2,6 +2,13 @@
   import { backend } from "$lib/canisters";
   import type { PageProps } from './$types';
   import type { LoanOffer, LoanRequest } from '../../../../../declarations/pawndao_backend/pawndao_backend.did.d.ts'; 
+  import { Principal } from "@dfinity/principal";
+  import { createAgent } from "@dfinity/utils";
+  import { LedgerCanister } from "@dfinity/ledger-icp";
+  import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
+  import { HttpAgent } from "@dfinity/agent";
+
+
 	let { data }: PageProps = $props();
   let loan_offers = $state(data.loanOffers);
 
@@ -15,6 +22,67 @@
     loan_offers = loanOffers;
   }
 
+  // approve ICRC transfer by backend
+  async function icrc2_approve(canister_id : string, amount : Number = 42069000000) {
+
+    //  TODO add auth
+    // const identity = await $auth.identity;
+    // const agent = await createAgent({
+    //   identity,
+    //   host:
+    //     process.env.DFX_NETWORK === "ic"
+    //       ? "https://icp-api.io"
+    //       : "http://127.0.0.1:4944",
+    // });
+
+
+    const agent = new HttpAgent({ /* no identity = anonymous */ });
+
+    // Fetch root key for certificate validation during development
+    if (process.env.DFX_NETWORK !== "ic") {
+      agent.fetchRootKey().catch((err) => {
+        console.warn(
+          "Unable to fetch root key. Check to ensure that your local replica is running"
+        );
+        console.error(err);
+      });
+    }
+
+
+    // const { metadata } = LedgerCanister.create({
+    //   agent,
+    //   canisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+    // });
+
+    // const { icrc2Approve } = LedgerCanister.create({
+    const { approve } = IcrcLedgerCanister.create({
+      agent,
+      canisterId: canister_id,
+    });
+    const icp_amountNat = Math.round(amount*10**8);
+    const approveArgs = {
+      spender: {owner: Principal.fromText(process.env.CANISTER_ID_PAWNDAO_BACKEND),
+                subaccount: [],
+               },
+      amount: icp_amountNat, // TODO dynamic fee
+      };
+
+      // TODO handle errors
+      try {
+          // Code that might throw an error
+          const approval = await approve(approveArgs);
+          console.log("ICRC approval: " + approval);
+      } catch (error) {
+          // Handle the exception
+          console.error('An error occurred:', error.message);
+          console.error('An error occurred:', error);
+          console.error('An error occurred:', error.errorType);
+          throw error;
+      }
+
+  }
+
+
   // Handler to accept a loan offer via loanOfferAccept
   async function loanOfferAccept(offerId:BigInt) {
     try {
@@ -22,7 +90,27 @@
       alert("Loan offer accepted!");
       // Optionally refresh data or update UI here
     } catch (e) {
-      alert("Error accepting loan offer: " + e);
+      if (e.message.match("InsufficientAllowance")) {
+        // TODO calculate amount to approve
+        const icrc2_approve_response = icrc2_approve(data.loanRequest.collateral_canister_id)
+          .catch((error) => {
+            alert(error);
+            console.error("henlo");
+            console.error(error);
+            throw error;
+          })
+          .then((response) => {
+            alert(response);
+            alert("HI");
+            loanOfferAccept(offerId);
+          });
+        // console.log(icrc2_approve_response );
+        // alert(icrc2_approve_response );
+        // alert(data.loanRequest.collateral_canister_id);
+        // alert("Error InsufficientAllowance " + e);
+      } else {
+        alert("Error accepting loan offer: " + e);
+      }
     }
     refreshLoanOffers();
   }
@@ -137,6 +225,9 @@
               <div><strong>Amount:</strong> {loan_offer.loan_amount}</div>
               <div><strong>Duration:</strong> {loan_offer.duration}</div>
               <div><strong>Interest:</strong> {loan_offer.interest}</div>
+              <button class="btn btn-success mt-3" onclick={() => icrc2_approve(data.loanRequest.collateral_canister_id, 0) }>
+                Debug: Collateral Allowance 0
+              </button>
               <button class="btn btn-success mt-3" onclick={() => loanOfferAccept(loan_offer.id)}>
                 Accept Offer
               </button>
