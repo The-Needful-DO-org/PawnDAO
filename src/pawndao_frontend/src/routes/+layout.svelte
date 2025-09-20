@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../app.css";
   // import "../index.scss";
- //  import Wallet from "../lib/Wallet.svelte";
+  import WalletBar from "$lib/components/WalletBar.svelte";
 	// // import type { PageProps } from './$types';
  //  import { page } from '$app/state'
  //  import { backend } from "$lib/canisters";
@@ -13,6 +13,7 @@
 
   onMount(() => {
 
+  // debugging tool eruda
     if (process.env.DFX_NETWORK !== "ic") {
       const script = document.createElement('script');
       script.onload = () => {
@@ -31,6 +32,8 @@
 </script>
 
 <Navbar/>
+
+<WalletBar/>
 
 {@render children()}
 
