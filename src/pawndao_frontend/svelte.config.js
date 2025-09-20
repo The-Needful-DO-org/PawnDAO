@@ -9,7 +9,7 @@ const config = {
     adapter: adapter({
       pages: 'dist',
       assets: 'dist',
-      fallback: undefined,
+      fallback: 'app.html',
       precompress: false,
       strict: true,
     }),

@@ -1,6 +1,6 @@
 import { fileURLToPath, URL } from 'url';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, searchForWorkspaceRoot } from 'vite';
 import environment from 'vite-plugin-environment';
 import dotenv from 'dotenv';
 import tailwindcss from "@tailwindcss/vite";
@@ -19,6 +19,16 @@ export default defineConfig({
     },
   },
   server: {
+    fs: {
+      // strict: false
+      allow: [
+        // Allow serving files from the workspace root
+        // searchForWorkspaceRoot(process.cwd()),
+        // Optionally, add additional custom paths if needed
+        '../../node_modules',
+      ],
+    },
+      
     proxy: {
       "/api": {
         target: "http://127.0.0.1:4943",
