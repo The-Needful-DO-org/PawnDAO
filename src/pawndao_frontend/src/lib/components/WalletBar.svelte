@@ -36,8 +36,11 @@ import { Principal } from "@dfinity/principal";
 
 let isWalletBarExpanded = $state(false);
 let showAddTokenInput = $state(false);
+let isWalletBarEdit = $state(false);
 
 let icrcBalances = $state({});
+
+let walletAddTokenButton = $state.raw<HTMLElement | null>(null);
 
 // helper to parse icrc1_metadata
 function valueToJs(v: any): string | number | bigint | Uint8Array {
@@ -405,6 +408,21 @@ onMount(() => {
   // $auth.init();
 });
 
+$effect(() => {
+    console.log('effect');
+    console.log('wallet view changed:', isWalletBarExpanded);
+});
+
+$effect(() => {
+    console.log('effect');
+    console.log('watched tokens changed:');
+    wallet.watched_icrc1_tokens;
+    wallet.refreshWatchedICRC1Tokens();
+    // if (wallet.watched_icrc1_tokens) {
+      // console.log('watched tokens changed:', wallet.watched_icrc1_tokens);
+    // }
+});
+
 async function icrc1_metadata(canister_id : string) {
 
   const agent = new HttpAgent({ /* no identity = anonymous */ });
@@ -496,6 +514,18 @@ async function icrc_balance(canister_id : string) {
 
   <div id="walletBar" class="absolute top-0 right-0 text-white text-sm text-shadow-cloud text-right">
 
+    {#if isWalletBarExpanded}
+      <button class={["rounded-full btn btn-warning", !isWalletBarEdit && 'btn-outline']}
+              aria-label="Toggle Wallet Edit" 
+              onclick={() => {
+              isWalletBarEdit = !isWalletBarEdit ;
+              wallet.refreshWatchedICRC1Tokens();
+              } }
+        >
+        ✎
+      </button>
+    {/if}
+
     <button class="rounded-full btn "
             aria-label="Toggle Wallet View" 
             onclick={() => {
@@ -509,19 +539,49 @@ async function icrc_balance(canister_id : string) {
     </button>
 
     {#if isWalletBarExpanded}
-      <div class="walletBarExpanded bg-[#111111] p-2">
+      <div class="walletBarExpanded bg-[#111111] p-2 max-h-[70vh] overflow-auto">
       <p class="bg-primary">
-        TODO Wallet
+        TODO Principal
       </p>
+      {#if isWalletBarEdit}
+        <h3 class="font-bold bg-success">Watched Tokens</h3>
+      {/if}
       <ul>
         <!-- <li>ICP: {icrc_balance("ryjl3-tyaaa-aaaaa-aaaba-cai").then((response) => { return response}) }</li> -->
         {#each wallet.watched_icrc1_tokens as token}
           <li>
+            {#if isWalletBarEdit}
+              <input class="checkbox checkbox-info checkbox-xs" type="checkbox" bind:checked={token.watched} />
+            {/if}
             {token.symbol || token.canister_id}: {token.balance }
             <!-- {token.canister_id}: {token.metadata} : {token.balance } -->
           </li>
         {/each}
       </ul>
+
+      {#if isWalletBarEdit}
+        <h3 class="font-bold bg-warning">All Tokens</h3>
+        <ul>
+        {#each wallet.icrc1_tokens as token}
+          <li>
+            <!-- TODO maybe use eye for checkbox or toggle switch -->
+            <!-- <label> -->
+            <!--   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16"> -->
+            <!--     <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z"/> -->
+            <!--     <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0"/> -->
+            <!--   </svg>    -->
+            <input class="checkbox checkbox-info checkbox-xs" type="checkbox" bind:checked={token.watched} />
+            <!-- </label> -->
+            {token.symbol || token.canister_id}: {token.balance }
+            <input class="btn btn-xs btn-error" 
+                   type="button" 
+                   value="×"
+                   onclick={()=> {wallet.icrc1_tokens.splice(wallet.icrc1_tokens.indexOf(token), 1) }}
+            />
+          </li>
+        {/each}
+        </ul>
+      {/if}
 
       {#if !showAddTokenInput}
         <button class="btn btn-primary btn-outline btn-xs"
@@ -532,13 +592,19 @@ async function icrc_balance(canister_id : string) {
         <button class="btn btn-error btn-xs join-item"
                 onclick={showAddTokenInput = !showAddTokenInput}
         >×</button>
-        <input class="input input-xs join-item" type="text" placeholder="canister-id" id="walletAddToken" name="walletAddToken">
+        <input class="input input-xs join-item" type="text" placeholder="canister-id" id="walletAddToken" name="walletAddToken"
+               onkeydown={(e)=> { e.key === 'Enter' ? walletAddTokenButton!.click() : null }}
+
+        >
         <button class="btn btn-success btn-xs join-item"
+                bind:this={walletAddTokenButton}
+                id="DEPRECATED_use_bind_instead_walletAddTokenButton"
                 onclick={() => {
                 // alert(walletAddToken.value);
                 // alert(wallet.icrc1_tokens);
                 wallet.icrc1_tokens.push({canister_id: walletAddToken.value, watched: true});
                 wallet.refreshWatchedICRC1Tokens();
+                walletAddToken.value = "";
                 // alert(wallet.icrc1_tokens);
                 // showAddTokenInput = !showAddTokenInput;
                 }}
