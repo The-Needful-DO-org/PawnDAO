@@ -1,12 +1,20 @@
-<script>
+<script lang="ts">
   // Add any necessary script logic here
   // import { page } from '$app/stores';
+  import { invalidate } from '$app/navigation';
   import { backend } from "$lib/canisters";
   import { Principal } from "@dfinity/principal";
+  import { wallet } from '$lib/components/WalletBar.svelte';
+  import { Icrc1Tokens } from '$lib/Icrc1Tokens.svelte';
+  import { refreshAllICRC1Tokens} from '$lib/Icrc1Tokens.svelte';
   let greeting = $state("");
   let notification = $state("");
   let desired_assets = $state([]);
-
+  let selectedCollateralId = $state();
+  let collateral_amount = $state();
+  let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === selectedCollateralId));
+  let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === desired_assets[0]));
+  refreshAllICRC1Tokens();
 
   function loanRequestSubmit(event) {
     event.preventDefault();
@@ -15,6 +23,7 @@
     console.log(event);
     const collateral_canister_id = Principal.fromText(event.target.collateral_canister_id.value);
     const collateral_amount = Number(event.target.collateral_amount.value);
+    // const collateral_amount_nat = collateral_amount*10**Number(wallet.
     // const desired_asset_canister_ids = event.target.desired_asset_canister_ids.value;
     // const desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
 
@@ -47,17 +56,48 @@
       notification = error;
     }).then((response) => {
       greeting = response;
+      notification = `Success: Created new Loan Request: <a href="/loan-requests/${response}">#${response}</a>`;
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      event.target.reset();
+      invalidate('app:loanrequests');
     });
     return false;
   }
+
+  $effect(() => {
+      // console.log('effect');
+      // console.log('collateral changed:', selectedCollateralId);
+      if (selectedCollateralId) {
+        wallet.addICRC1Token(selectedCollateralId);
+
+        // TODO this is sloppy bro but wtv keep going
+        if (!Icrc1Tokens.find((token) => token.canister_id === selectedCollateralId)) {
+          // Icrc1Tokens.push({canister_id: selectedCollateralId});
+          Icrc1Tokens.unshift({canister_id: selectedCollateralId});
+          refreshAllICRC1Tokens();
+        }
+      }
+  });
+
 </script>
 
-{notification}
-{greeting}
-{desired_assets}
+{#if notification}
+  <div role="alert" class="alert">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+    <span>{@html notification}</span>
+  </div>
+{/if}
+<!-- {greeting} -->
+<!-- {desired_assets} -->
 
-<div class="flex justify-center items-center w-full min-h-screen px-5 py-5">
-  <div class="xl:max-w-7xl drop-shadow-xl border border-black/20 w-full rounded-md flex justify-between items-stretch px-5 xl:px-5 py-5">
+<!-- <button onclick={()=>alert(`${Icrc1Tokens[0].canister_id} ${Icrc1Tokens[0].decimals}`)}>ICRC1Token Info</button> -->
+
+<!-- <div class="flex justify-center items-center w-full min-h-screen px-5 py-5"> -->
+<div class="justify-center items-center w-full px-5 py-5">
+  <!-- <div class="xl:max-w-7xl drop-shadow-xl border border-black/20 w-full rounded-md flex justify-between items-stretch px-5 xl:px-5 py-5"> -->
+  <div class="xl:max-w-7xl drop-shadow-xl border border-black/20 w-full rounded-md justify-between items-stretch px-5 xl:px-5 py-5">
     <div class="mx-auto w-full lg:w-1/2 md:p-10 py-5 md:py-0">
       <h1 class="text-center text-2xl sm:text-3xl font-semibold text-[#4A07DA]">Create Loan Request</h1>
       <form id="LoanRequestForm" class="w-full mt-5 sm:mt-8" onsubmit={loanRequestSubmit}>
@@ -77,42 +117,56 @@
             <div class="filter">
               <input class="btn btn-square filter-reset" type="radio" name="collateral_canister_id" value="×" aria-label="×" 
                 onclick={() => {
-                      LoanRequestForm.collateral_canister_id.forEach(function(radio) {
-                        radio.checked = false;
-                      });
+                      selectedCollateralId = null;
                     }}
                 />
-              <input id="icp-btn" class="btn" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
-              <input class="btn" type="radio" name="collateral_canister_id" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" required />
+              <input bind:group={selectedCollateralId} id="icp-btn" class="btn" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" required />
             </div>
           </div>
+
+          <!-- Collateral Balance -->
+          <!-- {wallet.icrc1_tokens[0].symbol} {wallet.icrc1_tokens[0].balance}  -->
+          {#if selectedCollateralId}
+            <span class={[(collateral_amount> wallet.icrc1_balance(selectedCollateralId)) && "text-warning"]}>Balance: {wallet.icrc1_balance(selectedCollateralId)}</span>
+            <!-- <span>{wallet.refreshICRC1Token(selectedCollateralId)}</span> -->
 
           <!-- Collateral Amount Input -->
           <div class="form-control">
             <label class="label">
               <span class="label-text">Collateral Amount</span>
             </label>
+
+            <div class="join">
             <input
               type="number"
+              bind:value={collateral_amount}
+              id="collateral_amount"
               name="collateral_amount"
+              step="0.00000001"
               placeholder="Enter amount"
-              class="input input-bordered input-primary w-full max-w-xs"
+              class="input input-bordered input-primary w-full max-w-xs join-item"
               required
             />
+            <label for="collateral_amount" class="input join-item">
+              {collateral_token?.symbol || "Unknown"}</label>
+            </div>
           </div>
+          {/if}
 
           <div id="desiredAssets" class="form-control">
             <label class="label" for="desired_asset_canister_ids">
@@ -226,17 +280,24 @@
           </div>
 
           <div class="form-control">
-            <label class="label">
+            <label for="desired_amounts" class="label">
               <span class="label-text">Desired Amount: </span>
             </label>
             {#if desired_assets.length > 0}
+              
+              <div class="join">
               <input
                 type="text"
                 name="desired_amounts"
+                id="desired_amounts"
                 placeholder="Enter desired asset amount (optional)"
-                class="input input-bordered input-primary w-full max-w-xs"
+                class="input input-bordered input-primary w-full max-w-xs join-item"
 
               />
+                <label for="desired_amounts" class="label input join-item">
+              <span>{desired_token?.symbol || "Unknown"}</span>
+              </label>
+              </div>
             {:else}
               <span>Any</span>
             {/if}

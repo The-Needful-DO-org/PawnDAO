@@ -8,17 +8,15 @@
 <main>
   {#if data.loanRequest}
 
-    <NewLoanOfferForm loan_request={data.loanRequest} />
-
-    <a href="/loan-requests/{data.loanRequest.id}/offers/new">
-      <span class="btn">Make Offer</span>
-    </a>
-    <!-- <a href="/loan-requests/2"> -->
-    <!--   <h1>Loan Request #{data.loanRequest.id}</h1> -->
-    <!-- </a> -->
     <a href="/loan-requests/{data.loanRequest.id}">
       <h1>Loan Request #{data.loanRequest.id}</h1>
     </a>
+
+    <NewLoanOfferForm loan_request={data.loanRequest} />
+
+    <!-- <a href="/loan-requests/2"> -->
+    <!--   <h1>Loan Request #{data.loanRequest.id}</h1> -->
+    <!-- </a> -->
     {console.log(data.loanRequest)}
       <div class="card">
         <div class="card-body">

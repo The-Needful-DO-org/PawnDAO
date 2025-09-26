@@ -72,6 +72,16 @@
 
         <div class="divider"></div>
 
+        <span>Interest: </span>
+        <span>{loan.interest} %</span>
+
+        <div class="divider"></div>
+
+        <span>Repay Amount: </span>
+        <span>{Number(loan.loan_amount) * (1 + Number(loan.interest)/100)} {loan.loan_asset_symbol || loan.loan_asset_canister_id}</span>
+
+        <div class="divider"></div>
+
         <span>Duration: </span>
         <span>{loan.duration} Days</span>
 

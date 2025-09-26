@@ -1,7 +1,7 @@
 <script>
   import { preventDefault } from 'svelte/legacy';
 
-  import "../index.scss";
+  // import "../index.scss";
   import { backend } from "$lib/canisters";
 
   let greeting = $state("");

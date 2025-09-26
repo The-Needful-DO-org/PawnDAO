@@ -1,47 +1,4 @@
-<script lang="ts">
-// import { createActor } from "../../../declarations/cloudpixels_backend";
-// import { createActor, canisterId as cloudpixels_backend } from "../../../declarations/cloudpixels_backend";
-// import { canisterId as cloudpixels_backend } from "../../../declarations/cloudpixels_backend";
-// import {AuthClient} from "@dfinity/auth-client";
-import {HttpAgent} from "@dfinity/agent";
-import { createAgent } from "@dfinity/utils";
-
-import { onMount } from "svelte";
-// import { greeting } from "$lib/greetingstore.svelte.js";
-
-// TODO auth
-// import { auth, getIdentityProvider } from "../stores/auth";
-
-import { LedgerCanister, AccountIdentifier } from "@dfinity/ledger-icp";
-import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
-import { Principal } from "@dfinity/principal";
-
-// import { tick } from 'svelte';
-// import { wallet } from "../stores/wallet.svelte.js";
-// import { refreshICPBalance } from "../stores/wallet.svelte.js";
-// import { refreshTICPBalance } from "../stores/wallet.svelte.js";
-// import { refreshTCLOUDBalance } from "../stores/wallet.svelte.js";
-// import { refreshCLOUDBalance } from "../stores/wallet.svelte.js";
-
-// import { getICPUSDRate } from "$lib/../stores/icp_usd_rate.svelte.js";
-// import { getCLOUDUSDRater } from "$lib/../stores/icp_usd_rate.svelte.js";
-// TODO generic token price rater
-// import { getTokenPriceRater } from "$lib/../stores/icp_usd_rate.svelte.js";
-// const icp_rater = getICPUSDRate();
-// const cloud_rater = getCLOUDUSDRater();
-// TODO generic token price rater
-// const price_rater = getTokenPriceRater();
-// icp_rater.getRate();
-// cloud_rater.getRate();
-
-let isWalletBarExpanded = $state(false);
-let showAddTokenInput = $state(false);
-let isWalletBarEdit = $state(false);
-
-let icrcBalances = $state({});
-
-let walletAddTokenButton = $state.raw<HTMLElement | null>(null);
-
+<script lang="ts" module>
 // helper to parse icrc1_metadata
 function valueToJs(v: any): string | number | bigint | Uint8Array {
   if ("Text" in v) return v.Text;
@@ -51,6 +8,100 @@ function valueToJs(v: any): string | number | bigint | Uint8Array {
   return v;
 }
 
+function updateOrAddObject(arr, canisterId, newObject) {
+  const existingObject = arr.find(obj => obj.canister_id === canisterId);
+  
+  if (existingObject) {
+    // Update the existing object
+    Object.assign(existingObject, newObject);
+  } else {
+    // Add a new object if not found
+    arr.push(newObject);
+  }
+}
+
+async function icrc_balance(canister_id : string) {
+
+  const agent = new HttpAgent({ /* no identity = anonymous */ });
+  if (process.env.DFX_NETWORK !== "ic") {
+  // Only in local/dev, never on mainnet:
+    await agent.fetchRootKey();
+  }
+  // console.log(agent);
+  // console.log(`${await agent.getPrincipal()}`);
+  const principal = await agent.getPrincipal();
+
+    const { metadata } = IcrcLedgerCanister.create({
+      agent,
+      canisterId: Principal.fromText(canister_id),
+    });
+
+    const { balance } = IcrcLedgerCanister.create({
+      agent,
+      canisterId: Principal.fromText(canister_id),
+    });
+
+    const icrc1BalanceOfArgs = {
+      owner: principal,
+      subaccount: null,
+    };
+
+    // TODO cleaner design
+    // icrcBalances[canister_id] = icrcBalances[canister_id] ?? {};
+
+    try {
+        // Code that might throw an error
+        const meta_response = await metadata({certified: false});
+        // console.log(meta_response);
+        // icrcBalances[canister_id].metadata = meta_response;
+        // return meta_response;
+    } catch (error) {
+        // Handle the exception
+        console.error('An error occurred:', error.message);
+        return error;
+    }
+
+    try {
+        // Code that might throw an error
+        const balance_response = await balance(icrc1BalanceOfArgs);
+        // console.log(balance_response);
+        // icrcBalances[canister_id].balance = balance_response;
+        return balance_response;
+    } catch (error) {
+        // Handle the exception
+        console.error('An error occurred:', error.message);
+        return error;
+    }
+}
+
+async function icrc1_metadata(canister_id : string) {
+
+  const agent = new HttpAgent({ /* no identity = anonymous */ });
+  if (process.env.DFX_NETWORK !== "ic") {
+  // Only in local/dev, never on mainnet:
+    await agent.fetchRootKey();
+  }
+  // console.log(agent);
+  // console.log(`${await agent.getPrincipal()}`);
+  const principal = await agent.getPrincipal();
+
+    const { metadata } = IcrcLedgerCanister.create({
+      agent,
+      canisterId: Principal.fromText(canister_id),
+    });
+
+    try {
+        // Code that might throw an error
+        const meta_response = await metadata({certified: false});
+        // console.log(meta_response);
+        return meta_response;
+    } catch (error) {
+        // Handle the exception
+        console.error('An error occurred:', error.message);
+        return error;
+    }
+
+}
 
   class Wallet {
     data = $state();
@@ -66,11 +117,11 @@ function valueToJs(v: any): string | number | bigint | Uint8Array {
         symbol: "NIL",
         watched: true
       },
-      {
-        canister_id: 'llcdy-4qaaa-aaaah-arcua-cai',
-        // symbol: "TPAWN",
-        watched: true
-      },
+      // {
+      //   canister_id: 'llcdy-4qaaa-aaaah-arcua-cai',
+      //   // symbol: "TPAWN",
+      //   watched: true
+      // },
       {
         canister_id: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
         symbol: "LICP",
@@ -101,112 +152,220 @@ function valueToJs(v: any): string | number | bigint | Uint8Array {
         // token.balance = 42069;
       });
     }
+
+    refreshAllICRC1Tokens = () => {
+      console.log("Wallet refreshing all icrc1 tokens");
+      this.icrc1_tokens.forEach(async (token) => {
+        if (token.metadata === undefined) {
+          await icrc1_metadata(token.canister_id).then((metadata) => {
+            token.metadata = metadata; 
+            const map = new Map<string, any>(metadata.map(([k, v]: [string, any]) => [k, valueToJs(v)]));
+            token.symbol = map.get("icrc1:symbol");        // Text -> e.g., "XTKN"
+            token.decimals = map.get("icrc1:decimals");    // Nat  -> e.g., 8n
+            token.fee = map.get("icrc1:fee");              // Nat  -> e.g., 10000n
+          })
+          .catch((error) => {console.error(error); });
+        }
+        // console.log(token.decimals);
+        // console.log(token.canister_id);
+        // console.log(token.metadata);
+        icrc_balance(token.canister_id)
+          .then((balance_nat) => {
+            console.log(`balancing: ${token.symbol} ${token.decimals} ${balance_nat}`)
+            const balance_float = Number(balance_nat) / 10**Number(token.decimals);
+            token.balance = balance_float != null && !isNaN(balance_float) ? balance_float: "Unavailable";
+            // if (typeof balance_float === 'number' && !isNaN(balance_float)) {
+            //   token.balance = balance_float; 
+            // } else {
+            //   token.balance = "Unavailable"; 
+            //}
+            })
+          // .then((balance) => {token.balance = Number(balance) / 10**Number(token.decimals); })
+          .catch((error) => {console.error(error); token.balance = "Error Unavailable"; });
+        // token.balance = 42069;
+      });
+    }
    
+  refreshICRC1Token = (canister_id : String) => {
+    alert(`Selected collateral canister id: ${canister_id}`);
+  }
 
-    // current_game = $derived.by(async () => { return await backend.get_game(this.current_game_id)} );
+  icrc1_balance = (canister_id : String) => {
+    // TODO 
+    // updateOrAddObject(this.icrc1_tokens, canisterId, newObject) {
+    const token = this.icrc1_tokens.find(obj => obj.canister_id === canister_id);
+    if (token) {
+      console.log(`wallet token: ${token.symbol} ${token.balance}`)
+      // return token?.balance || "Token Unavailable";
+      return token.balance;
+    } else {
+        console.log(`wallet token not found`)
+      // add token to list
+      // this.icrc1_tokens.push({canister_id: canister_id, watched: false});
+      // this.refreshAllICRC1Tokens();
+    }
+    return this.icrc1_tokens.find(obj => obj.canister_id === canister_id)?.balance || "BUnavailable";
+  }
 
-    // containsUser = $derived(this.data?.seats.some(obj => obj.player[0]?.user_id.toString() === "2vxsx-fae"));
-    // containsUser = (user_id) => { return this.data?.seats?.some(obj => obj.user_id.toString() === user_id) };
+  addICRC1Token = (canister_id) => {
+    const token = this.icrc1_tokens.find(obj => obj.canister_id === canister_id);
+    if (token) {
+      return false;
+    } else {
+      // add token to list
+      this.icrc1_tokens.push({canister_id: canister_id, watched: false});
+      this.refreshAllICRC1Tokens();
+    }
+    return true;
+  }
 
-    // poll_data = () => {
-    //   setTimeout( async () => { 
-    //     this.get_table();
-    //     this.current_game_id = (await backend.get_game_ids_by_table_id(table_id)).at(-1);
-    //     if (this.current_game_id != null) {
-    //       this.current_game = (await backend.get_game(this.current_game_id))[0];
-    //     }
-    //     // console.log(Date());
-    //     this.poll_data();
-    //           // e.target.parentElement.classList.remove("text-black")
-    //   }, 2000);
-    // }
-    
-    // // TODO player validation
-    // isStartable = $derived(this.current_game?.status === "pending" && this.isShuffling == false);
-    // new_game = () => {
-    //   this.isNewGameable = false;
-    //     // TODO isNewGameable ?
-    //     // TODO auth call to backend
-    //     backend.create_game(game_table.data.id)
-    //       .catch((error) => {
-    //         // TODO notification error
-    //         // console.log("error");
-    //         console.log(error);
-    //         throw error;
-    //       })
-    //       .then((response) => {
-    //         // console.log(response);
-    //         // console.log(this);
-    //         if (typeof(response) === 'bigint')
-    //           game_table.current_game_id = response;
-    //       })
-    //       .then((response) => {
-    //         // console.log(response);
-    //         game_table.start_game();
-    //       });
-    // }
-    //
-    // join = async () => {
-    //
-    //   // game_table.data = ( await $auth.actor.join_table(game_table.data.id))[0]
-    //   $auth.actor.join_table(game_table.data.id)
-    //     .catch((error) => {
-    //       // TODO notification error
-    //       console.log(error);
-    //       throw error;
-    //     })
-    //     .then((response) => {
-    //       game_table.data = response[0];
-    //     })
-    // }
-    //
-    // start_game = () => {
-    //   console.log(`Starting game: ${game_table.current_game_id}`);
-    //   // this.isShuffling = true;
-    //   // this.current_game = (await 
-    //     backend.start_game(game_table.current_game_id)
-    //     .catch((error) => {
-    //       // TODO notification error
-    //       // console.log("error");
-    //       console.log(error);
-    //       // this.isShuffling = false;
-    //       throw error;
-    //     })
-    //     .then((response) => {
-    //       // console.log(response);
-    //       // console.log(this);
-    //       if (typeof(response) === 'object')
-    //         game_table.current_game = response[0];
-    //       // this.isShuffling = false;
-    //     });
-    //     game_table.get_current_game();
-    //
-    // }
-    //
-    // get_current_game = async () => {
-    //   console.log("get curreny game");
-    //   this.current_game = (await backend.get_game(this.current_game_id))[0];
-    // }
-    //
-    // get_table = async () => {
-    //   this.data = (await backend.get_table(table_id))[0];
-    // }
-    //
-    // // containsUser = $state((user_id) => {
-    // //   console.log(user_id);
-    // //   console.log(this);
-    // //   console.log(this.data?.seats.some(obj => obj.player[0]?.user_id.toString() === user_id));
-    // //   this.data?.seats.some(obj => obj.player[0]?.user_id.toString() === user_id)
-    // //   // false;
-    // // })
-    //
-    // get count() {
-    //   return this.data;
-    // }
 }
   
 export const wallet = new Wallet();
+</script>
+
+<script lang="ts">
+// import { createActor } from "../../../declarations/cloudpixels_backend";
+// import { createActor, canisterId as cloudpixels_backend } from "../../../declarations/cloudpixels_backend";
+// import { canisterId as cloudpixels_backend } from "../../../declarations/cloudpixels_backend";
+// import {AuthClient} from "@dfinity/auth-client";
+import {HttpAgent} from "@dfinity/agent";
+import { createAgent } from "@dfinity/utils";
+
+import { onMount } from "svelte";
+// import { greeting } from "$lib/greetingstore.svelte.js";
+
+// TODO auth
+// import { auth, getIdentityProvider } from "../stores/auth";
+
+import { LedgerCanister, AccountIdentifier } from "@dfinity/ledger-icp";
+import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
+import { Principal } from "@dfinity/principal";
+
+// import { tick } from 'svelte';
+// import { wallet } from "../stores/wallet.svelte.js";
+
+// import { getICPUSDRate } from "$lib/../stores/icp_usd_rate.svelte.js";
+// import { getCLOUDUSDRater } from "$lib/../stores/icp_usd_rate.svelte.js";
+// TODO generic token price rater
+// import { getTokenPriceRater } from "$lib/../stores/icp_usd_rate.svelte.js";
+// const icp_rater = getICPUSDRate();
+// const cloud_rater = getCLOUDUSDRater();
+// TODO generic token price rater
+// const price_rater = getTokenPriceRater();
+// icp_rater.getRate();
+// cloud_rater.getRate();
+
+let isWalletBarExpanded = $state(false);
+let showAddTokenInput = $state(false);
+let isWalletBarEdit = $state(false);
+
+let icrcBalances = $state({});
+let icrc1_token_to_transfer = $state({});
+
+let walletAddTokenButton = $state.raw<HTMLElement | null>(null);
+
+
+
 wallet.refreshWatchedICRC1Tokens();
+
+
+async function onSubmitICRC1Transfer(event : Event) {
+  event.preventDefault();
+  console.log(event);
+  event.target.transfer_amount_submit.disabled = true;
+  
+  const token = icrc1_token_to_transfer;
+  const transfer_to = event.target.transfer_to.value;
+  const amount = event.target.transfer_amount.value;
+  // TODO get decimals instead of hardcoded 8
+  const amountNat = Number(amount)*10**Number(token.decimals);
+  // console.log(amount);
+  // console.log(amountNat);
+
+  // TODO auth
+  // if ($auth.isAuthenticated) {
+  if (true) {
+    // console.log("hi");
+
+    // TODO auth
+    // const identity = await $auth.identity;
+    // // const identity = $auth.identity; //TODO is await necessary?
+
+    // const agent = await createAgent({
+    //   identity,
+    //   host:
+    //     process.env.DFX_NETWORK === "ic"
+    //       ? "https://icp-api.io"
+    //       : "http://127.0.0.1:4944",
+    // });
+
+    const agent = new HttpAgent({ /* no identity = anonymous */ });
+
+    // Fetch root key for certificate validation during development
+    if (process.env.DFX_NETWORK !== "ic") {
+      agent.fetchRootKey().catch((err) => {
+        console.warn(
+          "Unable to fetch root key. Check to ensure that your local replica is running"
+        );
+        console.error(err);
+      });
+    }
+
+    let transfer;
+    let transferArgs;
+    try {
+      transfer = IcrcLedgerCanister.create({
+        agent,
+        canisterId: token.canister_id,
+      }).transfer;
+      // console.log(transfer);
+
+      transferArgs = {
+        to: {owner: Principal.fromText(transfer_to),
+                  subaccount: [],
+                 },
+        amount: amountNat, // + 10000, // TODO dynamic fee
+        };
+
+    } catch (error) {
+        // Handle the exception
+        console.error('An error occurred:', error.message);
+        // event.target.transfer_amount_submit.disabled = false;
+        // throw error;
+    }
+
+    let transfer_response;
+    try {
+        // Code that might throw an error
+        transfer_response = await transfer(transferArgs);
+    } catch (error) {
+        // Handle the exception
+        console.error('An error occurred:', error.message);
+    }
+
+       console.log('Transfer response: ', transfer_response);
+
+    // let principal = $auth.identity._principal;
+    // console.log(principal.toString());
+
+    // TODO: do something with transfer response?
+    // let transfer = "";
+    // transfer = transfer_response;
+    // clear form
+    if (transfer_response != undefined) {
+      event.target.transfer_to.value = "";
+      event.target.transfer_amount.value = "";
+    }
+    event.target.transfer_amount_submit.disabled = false;
+
+    // refresh balance
+    wallet.refreshWatchedICRC1Tokens();
+
+  return false;
+  }
+}
+
 
 // async function onSubmitTransfer(event) {
 //   console.log(event);
@@ -423,88 +582,7 @@ $effect(() => {
     // }
 });
 
-async function icrc1_metadata(canister_id : string) {
 
-  const agent = new HttpAgent({ /* no identity = anonymous */ });
-  if (process.env.DFX_NETWORK !== "ic") {
-  // Only in local/dev, never on mainnet:
-    await agent.fetchRootKey();
-  }
-  // console.log(agent);
-  // console.log(`${await agent.getPrincipal()}`);
-  const principal = await agent.getPrincipal();
-
-    const { metadata } = IcrcLedgerCanister.create({
-      agent,
-      canisterId: Principal.fromText(canister_id),
-    });
-
-    try {
-        // Code that might throw an error
-        const meta_response = await metadata({certified: false});
-        // console.log(meta_response);
-        return meta_response;
-    } catch (error) {
-        // Handle the exception
-        console.error('An error occurred:', error.message);
-        return error;
-    }
-
-}
-
-async function icrc_balance(canister_id : string) {
-
-  const agent = new HttpAgent({ /* no identity = anonymous */ });
-  if (process.env.DFX_NETWORK !== "ic") {
-  // Only in local/dev, never on mainnet:
-    await agent.fetchRootKey();
-  }
-  // console.log(agent);
-  // console.log(`${await agent.getPrincipal()}`);
-  const principal = await agent.getPrincipal();
-
-    const { metadata } = IcrcLedgerCanister.create({
-      agent,
-      canisterId: Principal.fromText(canister_id),
-    });
-
-    const { balance } = IcrcLedgerCanister.create({
-      agent,
-      canisterId: Principal.fromText(canister_id),
-    });
-
-    const icrc1BalanceOfArgs = {
-      owner: principal,
-      subaccount: null,
-    };
-
-    // TODO cleaner design
-    icrcBalances[canister_id] = icrcBalances[canister_id] ?? {};
-
-    try {
-        // Code that might throw an error
-        const meta_response = await metadata({certified: false});
-        // console.log(meta_response);
-        icrcBalances[canister_id].metadata = meta_response;
-        // return meta_response;
-    } catch (error) {
-        // Handle the exception
-        console.error('An error occurred:', error.message);
-        return error;
-    }
-
-    try {
-        // Code that might throw an error
-        const balance_response = await balance(icrc1BalanceOfArgs);
-        // console.log(balance_response);
-        icrcBalances[canister_id].balance = balance_response;
-        return balance_response;
-    } catch (error) {
-        // Handle the exception
-        console.error('An error occurred:', error.message);
-        return error;
-    }
-}
 
 </script>
 
@@ -549,11 +627,25 @@ async function icrc_balance(canister_id : string) {
       <ul>
         <!-- <li>ICP: {icrc_balance("ryjl3-tyaaa-aaaaa-aaaba-cai").then((response) => { return response}) }</li> -->
         {#each wallet.watched_icrc1_tokens as token}
-          <li>
+          <li class="py-1 flex items-center justify-end space-x-1">
             {#if isWalletBarEdit}
               <input class="checkbox checkbox-info checkbox-xs" type="checkbox" bind:checked={token.watched} />
             {/if}
-            {token.symbol || token.canister_id}: {token.balance }
+            <span>{token.symbol || token.canister_id}: {token.balance }</span>
+            <button class={["rounded-full btn btn-info btn-xs btn-outline"]}
+                    aria-label="Token Send Modal Open" 
+                    onclick={() => {
+                    icrc1_token_to_transfer = token;
+                    icrc1_tansfer_modal.showModal();
+                    // alert(`TODO show transfer modal ${token.symbol}`);
+                    wallet.refreshWatchedICRC1Tokens();
+                    } }
+              >
+              <!-- bootstrap eject icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eject" viewBox="0 0 16 16"><path d="M7.27 1.047a1 1 0 0 1 1.46 0l6.345 6.77c.6.638.146 1.683-.73 1.683H1.656C.78 9.5.326 8.455.926 7.816zM14.346 8.5 8 1.731 1.654 8.5zM.5 11.5a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1z" /></svg>
+              <!-- bootstrap send icon -->
+              <!-- <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send" viewBox="0 0 16 16"> <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/> </svg> -->
+            </button>
             <!-- {token.canister_id}: {token.metadata} : {token.balance } -->
           </li>
         {/each}
@@ -563,7 +655,7 @@ async function icrc_balance(canister_id : string) {
         <h3 class="font-bold bg-warning">All Tokens</h3>
         <ul>
         {#each wallet.icrc1_tokens as token}
-          <li>
+          <li class="py-1 flex items-center justify-end space-x-1">
             <!-- TODO maybe use eye for checkbox or toggle switch -->
             <!-- <label> -->
             <!--   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16"> -->
@@ -572,7 +664,7 @@ async function icrc_balance(canister_id : string) {
             <!--   </svg>    -->
             <input class="checkbox checkbox-info checkbox-xs" type="checkbox" bind:checked={token.watched} />
             <!-- </label> -->
-            {token.symbol || token.canister_id}: {token.balance }
+            <span>{token.symbol || token.canister_id}: {token.balance }</span>
             <input class="btn btn-xs btn-error" 
                    type="button" 
                    value="×"
@@ -614,6 +706,40 @@ async function icrc_balance(canister_id : string) {
       {/if}
       </div>
     {/if}
+
+<!-- Open the modal using ID.showModal() method -->
+  <dialog id="icrc1_tansfer_modal" class="modal">
+    <div class="modal-box">
+      <h3 class="text-lg font-bold">Transfer</h3>
+      <p class="py-4">Balance: {icrc1_token_to_transfer.balance} {icrc1_token_to_transfer.symbol}</p>
+          <!-- <h3 class="pb-4">{icrc1_token_to_transfer.symbol || icrc1_token_to_transfer.canister_id} Transfer:</h3> -->
+          <form id="transfer_form" action="#" onsubmit={onSubmitICRC1Transfer}>
+            <label class="floating-label"
+                   for="transfer_to">
+              <input class="input" size="64" id="transfer_to" alt="Transfer to input" type="text"
+                placeholder="Destination principal:"
+              />
+              <span>Destination principal: &nbsp;</span>
+            </label>
+            <div>
+              <label class="floating-label inline-block"
+                     for="transfer_amount">
+                <input class="input" id="transfer_amount" alt="Transfer amount input" type="text"
+                  placeholder="Amount to transfer: "
+                />
+                <span>Amount to transfer: </span>
+              </label>
+              <span class="align-middle">{icrc1_token_to_transfer.symbol}</span>
+            </div>
+            <button class="btn btn-info"
+              id="transfer_amount_submit" type="submit">Send</button>
+          </form>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
 
   </div>
 </div>

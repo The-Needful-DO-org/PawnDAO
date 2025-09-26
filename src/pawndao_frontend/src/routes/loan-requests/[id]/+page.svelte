@@ -6,12 +6,137 @@
   import { createAgent } from "@dfinity/utils";
   import { LedgerCanister } from "@dfinity/ledger-icp";
   import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
+  import type { AllowanceParams  } from "@dfinity/ledger-icrc";
+  // import type { Account, AllowanceArgs, icrc21_consent_message_request as ConsentMessageArgs, GetBlocksArgs, Subaccount, Timestamp, Tokens } from "@dfinity/ledger-icrc/dist/candid/icrc_ledger";
+
   import { HttpAgent } from "@dfinity/agent";
+  import { icrc1_balance, icrc1_decimals } from "$lib/icrc_functions";
+
 
 
 	let { data }: PageProps = $props();
   let loan_offers = $state(data.loanOffers);
 
+  // function sleep(ms) {
+  //   return new Promise(resolve => setTimeout(resolve, ms));
+  // }
+
+  async function validateLoanOfferFunds(loan_offer) {
+  let isValid = true;
+  let validations = [];
+  // let validations = {
+  //   collateral_funds_available: undefined,
+  //   loan_funds_available: undefined 
+  //   }
+
+    // validate collateral balance
+    const loan_requester_principal = data.loanRequest.user_id;
+    const collateral_canister_id = data.loanRequest.collateral_canister_id;
+    const collateral_balance_nat = await icrc1_balance(loan_requester_principal, collateral_canister_id);
+    const collateral_decimals : Number = await icrc1_decimals(collateral_canister_id);
+    const collateral_balance_float = Number(collateral_balance_nat) / 10**Number(collateral_decimals);
+    if (collateral_balance_float < data.loanRequest.collateral_amount) { // TODO account for fee
+      isValid = false;
+      validations.push([false, "Collateral Funds Unavailable"]);
+    } else {
+      validations.push([true, "Collateral Funds Available"]);
+    }
+
+    // alert(collateral_balance_nat);
+    // alert(collateral_balance_float);
+    // alert(collateral_decimals);
+
+    // validate collateral allowance
+    const agent = await HttpAgent.create({});
+
+    // Fetch root key for certificate validation during development
+    if (process.env.DFX_NETWORK !== "ic") {
+      agent.fetchRootKey().catch((err) => {
+        console.warn(
+          "Unable to fetch root key. Check to ensure that your local replica is running"
+        );
+        console.error(err);
+      });
+    }
+
+    // const { approve } = IcrcLedgerCanister.create({
+    const collateral_ledger = IcrcLedgerCanister.create({
+      agent,
+      canisterId: collateral_canister_id,
+    });
+
+  // const allowance_args = {
+  const allowance_args : AllowanceParams = {
+    account: {
+      owner: data.loanRequest.user_id,
+      subaccount: []
+    },
+    spender: {
+      owner: Principal.fromText(process.env.CANISTER_ID_PAWNDAO_BACKEND),
+      subaccount: []
+      }
+  };
+
+    const collateral_allowance_response = await collateral_ledger.allowance(allowance_args);
+    const collateral_allowance_nat = collateral_allowance_response.allowance;
+    const collateral_allowance_float = Number(collateral_allowance_nat) / 10**collateral_decimals;
+    // console.log(collateral_allowance);
+    // console.log(collateral_allowance_float);
+    // alert(collateral_allowance.allowance);
+    if (collateral_allowance_float < data.loanRequest.collateral_amount) {
+      isValid = false;
+      validations.push([false, "Collateral Allowance Unavailable"]);
+    } else {
+      validations.push([true, "Collateral Allowance Available"]);
+    }
+
+
+
+    // validate loan offer funds balance
+    const lender_balance_nat = await icrc1_balance(loan_offer.user_id, loan_offer.loan_asset_canister_id);
+    const loan_asset_decimals : Number = await icrc1_decimals(loan_offer.loan_asset_canister_id);
+    const lender_balance_float = Number(lender_balance_nat) / 10**loan_asset_decimals;
+    if (lender_balance_float < loan_offer.loan_amount) { // TODO account for fee
+      isValid = false;
+      validations.push([false, "Lender Funds Unavailable"]);
+    } else {
+      validations.push([true, "Lender Funds Available"]);
+    }
+
+
+    // TODO validate loan offer funds allowance
+    const loan_asset_ledger = IcrcLedgerCanister.create({
+      agent,
+      canisterId: loan_offer.loan_asset_canister_id,
+    });
+
+  const lender_allowance_args : AllowanceParams = {
+    account: {
+      owner: loan_offer.user_id,
+      subaccount: []
+    },
+    spender: {
+      owner: Principal.fromText(process.env.CANISTER_ID_PAWNDAO_BACKEND),
+      subaccount: []
+      }
+  };
+
+    const loan_asset_allowance_response = await loan_asset_ledger.allowance(lender_allowance_args);
+    const loan_asset_allowance_nat = loan_asset_allowance_response.allowance;
+    const loan_asset_allowance_float = Number(loan_asset_allowance_nat) / 10**loan_asset_decimals;
+    // console.log(collateral_allowance);
+    // console.log(collateral_allowance_float);
+    // alert(collateral_allowance.allowance);
+    if (loan_asset_allowance_float < loan_offer.loan_amount) {
+      isValid = false;
+      validations.push([false, "Lender Allowance Unavailable"]);
+    } else {
+      validations.push([true, "Lender Allowance Available"]);
+    }
+
+    // await sleep(5000); // mock test await 
+    return [isValid, validations];
+  }
 
   async function refreshLoanOffers() {
     // TODO a backend query for loanoffers by loanrequest id
@@ -36,7 +161,7 @@
     // });
 
 
-    const agent = new HttpAgent({ /* no identity = anonymous */ });
+    const agent = await HttpAgent.create({});
 
     // Fetch root key for certificate validation during development
     if (process.env.DFX_NETWORK !== "ic") {
@@ -169,14 +294,12 @@
   {#if !data.loanRequest}
     Not found
   {:else}
-    <a href="/loan-requests/{data.loanRequest.id}/offers/new">
-      <span class="btn">Make Offer</span>
-    </a>
-    <!-- <a href="/loan-requests/2"> -->
-    <!--   <h1>Loan Request #{data.loanRequest.id}</h1> -->
-    <!-- </a> -->
     <a href="/loan-requests/{data.loanRequest.id}">
       <h1>Loan Request #{data.loanRequest.id}</h1>
+    </a>
+
+    <a href="/loan-requests/{data.loanRequest.id}/offers/new">
+      <span class="btn btn-secondary">Make Offer</span>
     </a>
     <!-- {console.log(data.loanRequest)} -->
     <!-- {console.log(data.loanOffers)} -->
@@ -215,11 +338,41 @@
 
       <div>
         <h2>Loan Offers</h2>
-        {#each loan_offers  as loan_offer}
+        {#each loan_offers as loan_offer}
           <div class="card mb-4">
             <div class="card-body">
               <div><strong>Offer ID:</strong> {loan_offer.id}</div>
               <div><strong>Status:</strong> {Object.entries(loan_offer.status)[0][0]}</div>
+              <div>
+                <strong>Funds:</strong>
+                {#await validateLoanOfferFunds(loan_offer) }
+                  <span class="loading loading-ring loading-xs"></span>
+                {:then loan_offer_funds_validation}
+                  {#if loan_offer_funds_validation[0] == true}
+                    <div class="tooltip tooltip-right" data-tip="All Funds Available">
+                      <span class="indicator-item status status-success"></span>
+                    </div>
+                  {:else}
+                    <!-- <div class="tooltip tooltip-right" data-tip={loan_offer_funds_validation[1].join("\r")}> -->
+                    <div class="tooltip tooltip-right">
+                      <div class="tooltip-content">
+                        <ul class="text-left">
+                          {#each loan_offer_funds_validation[1] as validation}
+                            <li>
+                              <span class={["indicator-item status", `status-${validation[0] ? "success" : "warning"}`]}></span>
+                              {validation[1]}
+                            </li>
+                          {/each}
+                        </ul>
+                      </div>
+                      <span class="indicator-item status status-warning"></span>
+                    </div>
+                  {/if}
+                {:catch error}
+                  Error validating funds
+                  {error}
+                {/await}
+              </div>
               <div><strong>Lender:</strong> {loan_offer.user_id}</div>
               <div><strong>Asset Canister ID:</strong> {loan_offer.loan_asset_canister_id}</div>
               <div><strong>Amount:</strong> {loan_offer.loan_amount}</div>

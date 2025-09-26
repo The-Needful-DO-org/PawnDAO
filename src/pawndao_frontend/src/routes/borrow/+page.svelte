@@ -1,19 +1,26 @@
 <script lang="ts">
   import { preventDefault } from 'svelte/legacy';
   import { backend } from "$lib/canisters";
+  import { invalidateAll } from '$app/navigation';
+  import { invalidate } from '$app/navigation';
   import type { PageProps } from './$types';
   let { data }: PageProps = $props();
   import NewLoanRequestForm from '$lib/components/NewLoanRequestForm.svelte';
-
+  import { wallet } from '$lib/components/WalletBar.svelte';
 </script>
 
 <main>
   <div class="container mx-auto">
-    <h1>Borrow</h1>
+    <h1 class="text-xl">Borrow</h1>
 
     <NewLoanRequestForm/>
 
   <h2>Loan Requests</h2>
+  <!-- <button class="btn" onclick={()=> {invalidate('app:loanrequests'); -->
+  <!-- // alert(data.loanRequests.length); -->
+  <!--   }}> -->
+  <!--   Refresh -->
+  <!-- </button> -->
   {#each data.loanRequests as loanRequest}
     {console.log(loanRequest)}
     <a href="/loan-requests/{loanRequest.id}">

@@ -3,11 +3,15 @@
   // import { page } from '$app/stores';
   import { backend } from "$lib/canisters";
   import { Principal } from "@dfinity/principal";
+  import { wallet } from '$lib/components/WalletBar.svelte';
   const { loan_request  } = $props();
 
   let greeting = $state("");
   let notification = $state("");
   let desired_assets = $state([]);
+  let desired_amounts = $state(loan_request.desired_amounts.length > 0 ? loan_request.desired_amounts : [[]]);
+  // TODO support multiple desired amounts
+  let desired_amount = $state((desired_amounts[0][1] || null));
   let collateral_canister_id = $state(loan_request.collateral_canister_id.toString());
   let collateral_amount = $state(loan_request.collateral_amount);
   let desired_duration = $state(loan_request.desired_duration);
@@ -17,7 +21,12 @@
     } catch { 
     desired_assets = [];
     }
+  let loan_asset_canister_id = $state(desired_assets[0]);
+  // let loan_asset_canister_id = $state();
 
+  let loan_amount = $state(desired_amount);
+  let offer_duration =$state(desired_duration);
+  let offer_interest =$state(desired_interest);
 
   function loanRequestSubmit(event) {
     event.preventDefault();
@@ -64,7 +73,7 @@
 
 // Add this function to handle loanOfferNew
   async function createLoanOffer() {
-    const form = document.getElementById("LoanRequestForm");
+    const form = document.getElementById("LoanOfferForm");
     const loan_request_id = loan_request.id;
     const loan_asset_canister_id = Principal.fromText(form.loan_asset_canister_id.value);
     const loan_amount = Number(form.loan_amount.value);
@@ -88,15 +97,13 @@
 
 {notification}
 {greeting}
-{typeof(desired_assets)}
-<!-- {console.log(desired_assets[0].toString())} -->
-{loan_request}
-{collateral_canister_id}
 
 <div class="flex justify-center items-center w-full min-h-screen px-5 py-5">
   <div class="xl:max-w-7xl drop-shadow-xl border border-black/20 w-full rounded-md flex justify-between items-stretch px-5 xl:px-5 py-5">
     <div class="mx-auto w-full lg:w-1/2 md:p-10 py-5 md:py-0">
       <h1 class="text-center text-2xl sm:text-3xl font-semibold text-secondary">Create Loan Offer</h1>
+
+      <h2 class="text-left text-xl sm:text-xl font-semibold text-info">Loan Request Terms: </h2>
       <form id="LoanRequestForm" class="w-full mt-5 sm:mt-8" onsubmit={loanRequestSubmit}>
         <div class="mx-auto w-full sm:max-w-md md:max-w-lg flex flex-col gap-5">
           <!-- Collateral Canister ID Input -->
@@ -265,9 +272,11 @@
             {#if desired_assets.length > 0}
               <input
                 type="text"
+                bind:value={desired_amount}
                 name="desired_amounts"
                 placeholder="Enter desired asset amount (optional)"
                 class="input input-bordered input-primary w-full max-w-xs"
+                disabled
 
               />
             {:else}
@@ -280,65 +289,96 @@
             <label class="label">
               <span class="label-text">Duration (days)</span>
             </label>
-            <input
-              type="number"
-              name="desired_duration"
-              placeholder="Enter duration in days"
-              class="input input-bordered input-primary w-full max-w-xs"
-              bind:value={desired_duration}
-              required
-            />
+            {#if desired_duration }
+              <input
+                type="number"
+                name="desired_duration"
+                placeholder="Enter duration in days"
+                class="input input-bordered input-primary w-full max-w-xs"
+                bind:value={desired_duration}
+                disabled
+              />
+            {:else}
+              <span>Any</span>
+            {/if}
           </div>
 
           <!-- Interest Input -->
           <div class="form-control">
             <label class="label">
-              <span class="label-text">Interest</span>
+              <span class="label-text">Desired Interest: </span>
             </label>
-            <input
-              type="number"
-              step="0.01"
-              name="desired_interest"
-              placeholder="Enter interest"
-              class="input input-bordered input-primary w-full max-w-xs"
-              bind:value={desired_interest}
-              required
+            {#if desired_interest }
+              <input
+                type="number"
+                step="0.01"
+                name="desired_interest"
+                placeholder="Enter interest"
+                class="input input-bordered input-primary w-full max-w-xs"
+                bind:value={desired_interest}
+                disabled
 
-            />
+              />
+            {:else}
+              <span>Any</span>
+            {/if}
           </div>
-
-          <!-- Submit Button -->
-          <div class="flex flex-col md:flex-row gap-2 md:gap-4 justify-center items-center">
-            <button type="submit" class="btn btn-active btn-primary btn-block max-w-[200px]">
-              Submit
-            </button>
-            <!-- <button type="reset" class="btn btn-outline btn-primary btn-block max-w-[200px]"> -->
-            <!--   Reset -->
-            <!-- </button> -->
-          </div>
-
+        </div>
+      </form>
 
 
           <!-- New Loan Offer Inputs -->
           <div class="mt-8 border-t pt-6">
-            <h2 class="text-lg font-semibold mb-2">Create Loan Offer</h2>
+            <h2 class="text-left text-xl sm:text-xl font-semibold text-secondary">Loan Offer Terms: </h2>
+            <form id="LoanOfferForm" class="w-full mt-5 sm:mt-8" onsubmit={createLoanOffer}>
             <div class="form-control mb-2">
               <label class="label">
-                <span class="label-text">Loan Asset Canister ID</span>
+                <span class="label-text">Loan Asset</span>
               </label>
-              <input
-                type="text"
-                name="loan_asset_canister_id"
-                placeholder="Enter canister ID"
-                class="input input-bordered input-primary w-full max-w-xs"
-                required
-              />
+              <!-- <input -->
+              <!--   bind:value={loan_asset_canister_id} -->
+              <!--   type="text" -->
+              <!--   name="loan_asset_canister_id" -->
+              <!--   placeholder="Enter canister ID" -->
+              <!--   class="input input-bordered input-primary w-full max-w-xs" -->
+              <!--   required -->
+              <!-- /> -->
+            <div class="filter">
+              <input class="btn btn-square filter-reset" type="radio" name="loan_asset_canister_id" value="×" aria-label="×" 
+                onclick={() => {
+                      loan_asset_canister_id = null;
+                    }}
+                />
+              <input id="icp-btn" bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" required />
             </div>
+
+            </div>
+
+
+          {#if loan_asset_canister_id}
+            <span class={[(loan_amount > wallet.icrc1_balance(loan_asset_canister_id)) && "text-warning"]}>Balance: {wallet.icrc1_balance(loan_asset_canister_id)}</span>
+          {/if}
+
             <div class="form-control mb-2">
               <label class="label">
                 <span class="label-text">Loan Amount</span>
               </label>
               <input
+                bind:value={loan_amount}
                 type="number"
                 name="loan_amount"
                 placeholder="Enter loan amount"
@@ -351,6 +391,7 @@
                 <span class="label-text">Duration (days)</span>
               </label>
               <input
+                bind:value={offer_duration}
                 type="number"
                 name="offer_duration"
                 placeholder="Enter duration in days"
@@ -363,6 +404,7 @@
                 <span class="label-text">Interest (%)</span>
               </label>
               <input
+                bind:value={offer_interest}
                 type="number"
                 step="0.01"
                 name="offer_interest"
@@ -374,16 +416,11 @@
             <button type="button" class="btn btn-primary mt-2" onclick={createLoanOffer}>
               Create Loan Offer
             </button>
-          </div>
-
-
-
-
+          </form>
+        </div>
 
 
         </div>
-      </form>
     </div>
   </div>
-</div>   
 
