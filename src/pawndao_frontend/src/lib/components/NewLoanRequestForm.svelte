@@ -23,7 +23,7 @@
     console.log(event);
     const collateral_canister_id = Principal.fromText(event.target.collateral_canister_id.value);
     const collateral_amount = Number(event.target.collateral_amount.value);
-    // const collateral_amount_nat = collateral_amount*10**Number(wallet.
+    const collateral_amount_nat = Math.floor(collateral_amount*10**Number(collateral_token.decimals));
     // const desired_asset_canister_ids = event.target.desired_asset_canister_ids.value;
     // const desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
 
@@ -46,7 +46,7 @@
     const desired_interest = Number(event.target.desired_interest.value);
     backend.loanRequestNew(
         collateral_canister_id,
-        collateral_amount,
+        collateral_amount_nat,
         desired_asset_canister_ids,
         desired_amounts,
         desired_duration,
@@ -54,6 +54,7 @@
     ).catch((error) => {
       console.log(error);
       notification = error;
+      throw(error);
     }).then((response) => {
       greeting = response;
       notification = `Success: Created new Loan Request: <a href="/loan-requests/${response}">#${response}</a>`;

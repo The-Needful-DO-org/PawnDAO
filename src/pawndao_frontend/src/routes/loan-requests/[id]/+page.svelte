@@ -1,21 +1,57 @@
 <script lang="ts">
   import { backend } from "$lib/canisters";
+  import { onMount } from "svelte";
   import type { PageProps } from './$types';
   import type { LoanOffer, LoanRequest } from '../../../../../declarations/pawndao_backend/pawndao_backend.did.d.ts'; 
   import { Principal } from "@dfinity/principal";
   import { createAgent } from "@dfinity/utils";
   import { LedgerCanister } from "@dfinity/ledger-icp";
   import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
+  import { mapTokenMetadata } from "@dfinity/ledger-icrc";
   import type { AllowanceParams  } from "@dfinity/ledger-icrc";
   // import type { Account, AllowanceArgs, icrc21_consent_message_request as ConsentMessageArgs, GetBlocksArgs, Subaccount, Timestamp, Tokens } from "@dfinity/ledger-icrc/dist/candid/icrc_ledger";
 
   import { HttpAgent } from "@dfinity/agent";
   import { icrc1_balance, icrc1_decimals } from "$lib/icrc_functions";
+  import { wallet } from '$lib/components/WalletBar.svelte';
 
 
 
 	let { data }: PageProps = $props();
   let loan_offers = $state(data.loanOffers);
+  // let collateral_token_ledger =
+  let collateral_decimals = $state();
+
+  onMount(async () => {
+    const agent = await HttpAgent.create({});
+    // const agent = new HttpAgent({ /* no identity = anonymous */ });
+
+    // Fetch root key for certificate validation during development
+    if (process.env.DFX_NETWORK !== "ic") {
+     await agent.fetchRootKey().catch((err) => {
+        console.warn(
+          "Unable to fetch root key. Check to ensure that your local replica is running"
+        );
+        console.error(err);
+      });
+    }
+
+    const collateral_ledger = IcrcLedgerCanister.create({
+      agent,
+      canisterId: data.loanRequest.collateral_canister_id,
+    });
+
+    try {
+      const meta_response = await collateral_ledger.metadata({certified: false});
+      const meta_map = mapTokenMetadata(meta_response);
+      console.log(meta_response);
+      collateral_decimals = meta_map?.decimals;
+    } catch(error) {
+      console.log(333);
+      console.log(error);
+
+    }
+  });
 
   // function sleep(ms) {
   //   return new Promise(resolve => setTimeout(resolve, ms));
@@ -35,7 +71,7 @@
     const collateral_balance_nat = await icrc1_balance(loan_requester_principal, collateral_canister_id);
     const collateral_decimals : Number = await icrc1_decimals(collateral_canister_id);
     const collateral_balance_float = Number(collateral_balance_nat) / 10**Number(collateral_decimals);
-    if (collateral_balance_float < data.loanRequest.collateral_amount) { // TODO account for fee
+    if (collateral_balance_nat < data.loanRequest.collateral_amount) { // TODO account for fee
       isValid = false;
       validations.push([false, "Collateral Funds Unavailable"]);
     } else {
@@ -83,7 +119,7 @@
     // console.log(collateral_allowance);
     // console.log(collateral_allowance_float);
     // alert(collateral_allowance.allowance);
-    if (collateral_allowance_float < data.loanRequest.collateral_amount) {
+    if (collateral_allowance_nat < data.loanRequest.collateral_amount) {
       isValid = false;
       validations.push([false, "Collateral Allowance Unavailable"]);
     } else {
@@ -93,10 +129,10 @@
 
 
     // validate loan offer funds balance
-    const lender_balance_nat = await icrc1_balance(loan_offer.user_id, loan_offer.loan_asset_canister_id);
+    const lender_balance_nat : Number  = await icrc1_balance(loan_offer.user_id, loan_offer.loan_asset_canister_id);
     const loan_asset_decimals : Number = await icrc1_decimals(loan_offer.loan_asset_canister_id);
     const lender_balance_float = Number(lender_balance_nat) / 10**loan_asset_decimals;
-    if (lender_balance_float < loan_offer.loan_amount) { // TODO account for fee
+    if (lender_balance_nat < loan_offer.loan_amount) { // TODO account for fee
       isValid = false;
       validations.push([false, "Lender Funds Unavailable"]);
     } else {
@@ -316,7 +352,7 @@
           <div class="divider"></div>
 
           <span>collateral_amount: </span>
-          <span>{data.loanRequest.collateral_amount}</span>
+          <span>{Number(data.loanRequest.collateral_amount) / 10**Number(collateral_decimals) || data.loanRequest.collateral_amount + "n"}</span>
           <div class="divider"></div>
           
           <span>desired_asset_canister_ids</span>
@@ -375,7 +411,7 @@
               </div>
               <div><strong>Lender:</strong> {loan_offer.user_id}</div>
               <div><strong>Asset Canister ID:</strong> {loan_offer.loan_asset_canister_id}</div>
-              <div><strong>Amount:</strong> {loan_offer.loan_amount}</div>
+              <div><strong>Amount:</strong> {Number(loan_offer.loan_amount) / 10**Number(wallet.icrc1_tokens.find((token) => token.canister_id === loan_offer.loan_asset_canister_id.toString()).decimals) || loan_offer.loan_amount + " nat"}</div>
               <div><strong>Duration:</strong> {loan_offer.duration}</div>
               <div><strong>Interest:</strong> {loan_offer.interest}</div>
               <button class="btn btn-success mt-3" onclick={() => icrc2_approve(data.loanRequest.collateral_canister_id, 0) }>

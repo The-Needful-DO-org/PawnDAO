@@ -14,6 +14,7 @@
   let desired_amount = $state((desired_amounts[0][1] || null));
   let collateral_canister_id = $state(loan_request.collateral_canister_id.toString());
   let collateral_amount = $state(loan_request.collateral_amount);
+  let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === collateral_canister_id));
   let desired_duration = $state(loan_request.desired_duration);
   let desired_interest = $state(loan_request.desired_interest);
   try {
@@ -76,14 +77,16 @@
     const form = document.getElementById("LoanOfferForm");
     const loan_request_id = loan_request.id;
     const loan_asset_canister_id = Principal.fromText(form.loan_asset_canister_id.value);
+    const loan_asset_token = wallet.icrc1_tokens.find(token => token.canister_id === loan_asset_canister_id.toString() );
     const loan_amount = Number(form.loan_amount.value);
+    const loan_amount_nat = loan_amount * 10**Number(loan_asset_token.decimals);
     const duration = Number(form.offer_duration.value);
     const interest = Number(form.offer_interest.value);
     try {
       const offer = await backend.loanOfferNew(
         loan_request_id,
         loan_asset_canister_id,
-        loan_amount,
+        loan_amount_nat,
         duration,
         interest
       );
@@ -143,7 +146,7 @@
               <span class="label-text">Collateral Amount</span>
             </label>
             <input
-              bind:value={collateral_amount}
+              value={Number(collateral_amount) / 10**Number(collateral_token.decimals)}
               type="number"
               name="collateral_amount"
               placeholder="Enter amount"
