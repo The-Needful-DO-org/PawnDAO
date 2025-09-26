@@ -83,7 +83,7 @@ public type LoanRequest = {
     desired_amounts : [(Principal, Nat)],
     desired_duration : Nat,
     desired_interest : Float,
-) : async Principal {
+) : async Nat {
     // let caller = Principal.fromActor(this); // Replace with `Principal.fromCaller()` for real user
     let caller = msg.caller; // Replace with `Principal.fromCaller()` for real user
     let loan_requests = switch (Map.get(userLoanRequests, Principal.compare, caller)) {
@@ -108,7 +108,8 @@ public type LoanRequest = {
     Debug.print(debug_show(loan_requests));
     Map.add(userLoanRequests, Principal.compare, caller, loan_requests);
     nextLoanRequestId += 1;
-    return caller;
+    // return caller;
+    return newLoanRequest.id;
   };
 
   // Retrieve all articles for a given user
@@ -169,6 +170,7 @@ type LoanStatus = {
   #Active;
   #Inactive;
   #Repaid;
+  #CollateralReturned;
   #Defaulted;
   #Cancelled;
   // #Banned : Text; // Optionally carry extra data, like a reason
@@ -288,6 +290,12 @@ public type Loan = {
          return modified_loan_offer;
        };
      };
+  };
+
+  func loanSetStatus(loan: Loan, new_status: LoanStatus) : Loan {
+     let modified_loan = { loan with status = new_status };
+     Map.add(idLoansMap, Nat.compare, modified_loan.id, modified_loan);
+     return modified_loan;
   };
 
   func loanOfferGetSync(loan_offer_id : Nat) : LoanOffer {
@@ -673,12 +681,32 @@ public type Loan = {
         });
 
      // TODO validate loan_repay_transfer_result
+     // Check that the transfer was successful.
+     let loan_repay_block_height = switch (loan_repay_transfer_result) {
+       case (#Ok(block_height)) {
+           // set status of Loan Offer to Repaid
+           ignore loanSetStatus(loan, #Repaid);
+           block_height;
+         };
+       case (#Err(err)) {
+         // Transfer failed. There's no cleanup for us to do since no state has
+         // changed, so we can just wrap and return the error to the frontend.
+         // TODO define return type instead of throw Result.Result<Loan, LoanRepayError> {
+         // return #err(#TransferFromError(err));
+         throw Error.reject("Loan Repay transfer error: " # debug_show(err) );
+       };
+     };
 
-     // TODO update Loan status, record of payment
+    // TODO log record of payment
+    // loan_repay_block_height 
 
-     // return the collateral
+    // return the collateral
     let collateral_token : ICRC.Actor = actor (Principal.toText(loan.collateral_canister_id));
     let collateral_token_fee = await collateral_token.icrc1_fee();
+    if (collateral_token_fee >= loan.collateral_amount) {
+      throw Error.reject("Collateral amount must be greater than transfer fee");
+    };
+
     let loan_return_collateral_transfer_result = await collateral_token.icrc2_transfer_from({
           spender_subaccount = null;
           from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
@@ -691,7 +719,7 @@ public type Loan = {
 
     // TODO validate loan_return_collateral_transfer_result
     // TODO update Loan status, record of payment
-    let modified_loan = { loan with status = #Repaid };
+    let modified_loan = { loan with status = #CollateralReturned };
     Map.add(idLoansMap, Nat.compare, modified_loan.id, modified_loan);
 
     return ?modified_loan;
