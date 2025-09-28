@@ -4,14 +4,15 @@
   import { backend } from "$lib/canisters";
   import { Principal } from "@dfinity/principal";
   import { wallet } from '$lib/components/WalletBar.svelte';
+  import { icrc1_decimals } from "$lib/icrc_functions";
+  import { onMount } from "svelte";
   const { loan_request  } = $props();
 
-  let greeting = $state("");
   let notification = $state("");
   let desired_assets = $state([]);
   let desired_amounts = $state(loan_request.desired_amounts.length > 0 ? loan_request.desired_amounts : [[]]);
   // TODO support multiple desired amounts
-  let desired_amount = $state((desired_amounts[0][1] || null));
+  let desired_amount_nat = $state((desired_amounts[0][1] || null));
   let collateral_canister_id = $state(loan_request.collateral_canister_id.toString());
   let collateral_amount = $state(loan_request.collateral_amount);
   let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === collateral_canister_id));
@@ -24,53 +25,15 @@
     }
   let loan_asset_canister_id = $state(desired_assets[0]);
   // let loan_asset_canister_id = $state();
+  let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === desired_assets[0]));
 
-  let loan_amount = $state(desired_amount);
+  let loan_amount = $state(Number(desired_amount_nat) / 10**Number(desired_token.decimals));
   let offer_duration =$state(desired_duration);
   let offer_interest =$state(desired_interest);
 
-  function loanRequestSubmit(event) {
-    event.preventDefault();
-    // console.log(event.target.collateral_canister_id);
-    // console.log(typeof(event.target.collateral_canister_id));
-    console.log(event);
-    const collateral_canister_id = Principal.fromText(event.target.collateral_canister_id.value);
-    const collateral_amount = Number(event.target.collateral_amount.value);
-    // const desired_asset_canister_ids = event.target.desired_asset_canister_ids.value;
-    // const desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
-
-    // var desired_asset_canister_ids = [];
-    // if (event.target.desired_asset_canister_ids.checked == true) {
-    //   desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
-    // }
-
-    const desired_asset_canister_ids = Array.from(event.target.desired_asset_canister_ids)
-      .filter(radio => radio.checked)
-      .map(radio => Principal.fromText(radio.value));
-
-    // const desired_amounts = event.target.desired_amounts.value;
-    // const desired_amounts = [event.target.desired_amounts.value];
-    var desired_amounts = [];
-    if (desired_assets.length > 0 && event.target.desired_amounts.value.length > 0) {
-      desired_amounts = [[Principal.fromText(desired_assets[0]), BigInt(event.target.desired_amounts.value)]];
-    }
-    const desired_duration = Number(event.target.desired_duration.value);
-    const desired_interest = Number(event.target.desired_interest.value);
-    backend.loanRequestNew(
-        collateral_canister_id,
-        collateral_amount,
-        desired_asset_canister_ids,
-        desired_amounts,
-        desired_duration,
-        desired_interest,
-    ).catch((error) => {
-      console.log(error);
-      notification = error;
-    }).then((response) => {
-      greeting = response;
-    });
-    return false;
-  }
+  onMount(async () => {
+    loan_amount = Number(desired_amount_nat) / 10**Number(await icrc1_decimals(Principal.fromText(desired_token?.canister_id)));
+  });
 
 // Add this function to handle loanOfferNew
   async function createLoanOffer() {
@@ -91,7 +54,6 @@
         interest
       );
       notification = "Loan offer created!";
-      // greeting = JSON.stringify(offer);
     } catch (e) {
       notification = "Error creating loan offer: " + e;
     }
@@ -99,7 +61,6 @@
 </script>
 
 {notification}
-{greeting}
 
 <div class="flex justify-center items-center w-full min-h-screen px-5 py-5">
   <div class="xl:max-w-7xl drop-shadow-xl border border-black/20 w-full rounded-md flex justify-between items-stretch px-5 xl:px-5 py-5">
@@ -275,7 +236,7 @@
             {#if desired_assets.length > 0}
               <input
                 type="text"
-                bind:value={desired_amount}
+                value={Number(desired_amount_nat) / 10**Number(desired_token.decimals) || desired_amount_nat + " nat"}
                 name="desired_amounts"
                 placeholder="Enter desired asset amount (optional)"
                 class="input input-bordered input-primary w-full max-w-xs"
@@ -383,9 +344,10 @@
               <input
                 bind:value={loan_amount}
                 type="number"
+                step="0.00000001"
                 name="loan_amount"
                 placeholder="Enter loan amount"
-                class="input input-bordered input-primary w-full max-w-xs"
+                class="input input-bordered input-primary w-full max-w-xs validator"
                 required
               />
             </div>
@@ -398,7 +360,7 @@
                 type="number"
                 name="offer_duration"
                 placeholder="Enter duration in days"
-                class="input input-bordered input-primary w-full max-w-xs"
+                class="input input-bordered input-primary w-full max-w-xs validator"
                 required
               />
             </div>
@@ -412,11 +374,11 @@
                 step="0.01"
                 name="offer_interest"
                 placeholder="Enter interest"
-                class="input input-bordered input-primary w-full max-w-xs"
+                class="input input-bordered input-primary w-full max-w-xs validator"
                 required
               />
             </div>
-            <button type="button" class="btn btn-primary mt-2" onclick={createLoanOffer}>
+            <button type="submit" class="btn btn-primary mt-2">
               Create Loan Offer
             </button>
           </form>

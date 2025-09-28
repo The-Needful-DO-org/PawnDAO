@@ -7,7 +7,7 @@
   import { wallet } from '$lib/components/WalletBar.svelte';
   import { Icrc1Tokens } from '$lib/Icrc1Tokens.svelte';
   import { refreshAllICRC1Tokens} from '$lib/Icrc1Tokens.svelte';
-  let greeting = $state("");
+
   let notification = $state("");
   let desired_assets = $state([]);
   let selectedCollateralId = $state();
@@ -18,6 +18,7 @@
 
   function loanRequestSubmit(event) {
     event.preventDefault();
+    try {
     // console.log(event.target.collateral_canister_id);
     // console.log(typeof(event.target.collateral_canister_id));
     console.log(event);
@@ -32,15 +33,17 @@
     //   desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
     // }
 
+    // TODO support multiple desired assets
     const desired_asset_canister_ids = Array.from(event.target.desired_asset_canister_ids)
       .filter(radio => radio.checked)
       .map(radio => Principal.fromText(radio.value));
 
+    const desired_amount_nat = Math.floor(event.target.desired_amounts.value*10**Number(desired_token.decimals));
     // const desired_amounts = event.target.desired_amounts.value;
     // const desired_amounts = [event.target.desired_amounts.value];
     var desired_amounts = [];
     if (desired_assets.length > 0 && event.target.desired_amounts.value.length > 0) {
-      desired_amounts = [[Principal.fromText(desired_assets[0]), BigInt(event.target.desired_amounts.value)]];
+      desired_amounts = [[Principal.fromText(desired_assets[0]), BigInt(desired_amount_nat)]];
     }
     const desired_duration = Number(event.target.desired_duration.value);
     const desired_interest = Number(event.target.desired_interest.value);
@@ -56,27 +59,29 @@
       notification = error;
       throw(error);
     }).then((response) => {
-      greeting = response;
       notification = `Success: Created new Loan Request: <a href="/loan-requests/${response}">#${response}</a>`;
       window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
       event.target.reset();
       invalidate('app:loanrequests');
     });
     return false;
+    } catch(error) {
+        notification = error;
+    }
   }
 
   $effect(() => {
       // console.log('effect');
       // console.log('collateral changed:', selectedCollateralId);
       if (selectedCollateralId) {
-        wallet.addICRC1Token(selectedCollateralId);
+        // wallet.addICRC1Token(selectedCollateralId);
 
         // TODO this is sloppy bro but wtv keep going
-        if (!Icrc1Tokens.find((token) => token.canister_id === selectedCollateralId)) {
-          // Icrc1Tokens.push({canister_id: selectedCollateralId});
-          Icrc1Tokens.unshift({canister_id: selectedCollateralId});
-          refreshAllICRC1Tokens();
-        }
+        // if (!Icrc1Tokens.find((token) => token.canister_id === selectedCollateralId)) {
+        //   // Icrc1Tokens.push({canister_id: selectedCollateralId});
+        //   Icrc1Tokens.unshift({canister_id: selectedCollateralId});
+        //   refreshAllICRC1Tokens();
+        // }
       }
   });
 
@@ -105,7 +110,7 @@
         <div class="mx-auto w-full sm:max-w-md md:max-w-lg flex flex-col gap-5">
           <!-- Collateral Canister ID Input -->
           <div class="form-control">
-            <label class="label">
+            <label for="collateral_canister_id" class="label">
               <span class="label-text">Collateral</span>
             </label>
             <!-- <input -->
@@ -116,12 +121,14 @@
             <!--   required -->
             <!-- /> -->
             <div class="filter">
-              <input class="btn btn-square filter-reset" type="radio" name="collateral_canister_id" value="×" aria-label="×" 
+              <input id="collateral_canister_id" class="btn btn-square filter-reset validator" type="radio" name="collateral_canister_id" value="×" aria-label="×" 
+                bind:group={selectedCollateralId}
                 onclick={() => {
                       selectedCollateralId = null;
                     }}
-                />
-              <input bind:group={selectedCollateralId} id="icp-btn" class="btn" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
+                required />
+              <div class="validator-hint hidden">Required</div>
+              <input bind:group={selectedCollateralId} id="icp-btn" class="btn validator" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
@@ -160,7 +167,7 @@
               name="collateral_amount"
               step="0.00000001"
               placeholder="Enter amount"
-              class="input input-bordered input-primary w-full max-w-xs join-item"
+              class="input input-bordered input-primary w-full max-w-xs join-item validator"
               required
             />
             <label for="collateral_amount" class="input join-item">
@@ -288,16 +295,16 @@
               
               <div class="join">
               <input
-                type="text"
+                type="number"
+                step="0.00000001"
                 name="desired_amounts"
                 id="desired_amounts"
                 placeholder="Enter desired asset amount (optional)"
-                class="input input-bordered input-primary w-full max-w-xs join-item"
+                class="input input-bordered input-primary w-full max-w-xs join-item validator"
 
               />
-                <label for="desired_amounts" class="label input join-item">
-              <span>{desired_token?.symbol || "Unknown"}</span>
-              </label>
+                <label for="desired_amounts" class="input join-item">
+                 {desired_token?.symbol || "Unknown"}</label>
               </div>
             {:else}
               <span>Any</span>
