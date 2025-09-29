@@ -1,4 +1,18 @@
 <script lang="ts" module>
+
+// serialize functions to store BigInt
+function serialize(value) {
+  return JSON.stringify(value, (key, value) =>
+    typeof value === 'bigint' ? value.toString() : value
+  );
+}
+
+function deserialize(str) {
+  return JSON.parse(str, (key, value) =>
+    /(?:^|[^\d])(\d{15,})(?:[^\d]|$)/.test(value) ? BigInt(value) : value
+  );
+}
+
 // helper to parse icrc1_metadata
 function valueToJs(v: any): string | number | bigint | Uint8Array {
   if ("Text" in v) return v.Text;
@@ -160,6 +174,7 @@ async function icrc1_metadata(canister_id : string) {
           .catch((error) => {console.error(error); token.balance = "Unavailable"; });
         // token.balance = 42069;
       });
+      localStorage.setItem('icrc1tokens', serialize(this.icrc1_tokens));
     }
 
     refreshAllICRC1Tokens = () => {
@@ -193,6 +208,7 @@ async function icrc1_metadata(canister_id : string) {
           .catch((error) => {console.error(error); token.balance = "Error Unavailable"; });
         // token.balance = 42069;
       });
+      localStorage.setItem('icrc1tokens', serialize(this.icrc1_tokens));
     }
    
   refreshICRC1Token = (canister_id : String) => {
@@ -231,6 +247,10 @@ async function icrc1_metadata(canister_id : string) {
 }
   
 export const wallet = new Wallet();
+const savedICRC1Tokens = localStorage.getItem('icrc1tokens');
+if (savedICRC1Tokens) wallet.icrc1_tokens = deserialize(savedICRC1Tokens);
+
+// localStorage.setItem('icrc1tokens', JSON.stringify(wallet.icrc1_tokens));
 </script>
 
 <script lang="ts">
