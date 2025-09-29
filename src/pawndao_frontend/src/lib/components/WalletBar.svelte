@@ -109,7 +109,8 @@ async function icrc1_metadata(canister_id : string) {
    metadata? : [string, object]
    fee? : BigInt,
    symbol? : string,
-   balance? : BigInt}
+   balance_nat? : BigInt,
+   balance? : Number}
 
   class Wallet {
     data = $state();

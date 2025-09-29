@@ -5,13 +5,13 @@
   import { backend } from "$lib/canisters";
   import { Principal } from "@dfinity/principal";
   import { wallet } from '$lib/components/WalletBar.svelte';
-  import { Icrc1Tokens } from '$lib/Icrc1Tokens.svelte';
+  // import { Icrc1Tokens } from '$lib/Icrc1Tokens.svelte';
   import { refreshAllICRC1Tokens} from '$lib/Icrc1Tokens.svelte';
 
   let notification = $state("");
   let desired_assets = $state([]);
   let selectedCollateralId = $state("");
-  let collateral_amount = $state();
+  let collateral_amount : Number | undefined = $state();
   let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === selectedCollateralId));
   let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === desired_assets[0]));
   refreshAllICRC1Tokens();
@@ -20,11 +20,11 @@
     event.preventDefault();
     try {
     if (!event.target) throw "Error: Form not found";
-    let form = event.target as HTMLFormElement;
+    let form = event.currentTarget as HTMLFormElement;
     if (!collateral_token) throw "Collateral Token not found";
 
-
     // console.log(event.target.collateral_canister_id);
+    // console.log(form.collateral_canister_id.value);
     // console.log(typeof(event.target.collateral_canister_id));
     // console.log(event);
     const collateral_canister_id = Principal.fromText(form.collateral_canister_id.value);
@@ -39,19 +39,23 @@
     // }
 
     // TODO support multiple desired assets
-    const desired_asset_canister_ids = Array.from(event.target.desired_asset_canister_ids)
-      .filter(radio => radio.checked)
+    const testing = Array.from(form.desired_asset_canister_ids);
+    console.log(testing);
+    const desired_asset_canister_ids : Principal[] = Array.from(form.desired_asset_canister_ids)
+      .filter((radio): radio is HTMLInputElement => (radio as HTMLInputElement).checked)
       .map(radio => Principal.fromText(radio.value));
 
-    const desired_amount_nat = Math.floor(event.target.desired_amounts.value*10**Number(desired_token.decimals));
     // const desired_amounts = event.target.desired_amounts.value;
     // const desired_amounts = [event.target.desired_amounts.value];
-    var desired_amounts = [];
-    if (desired_assets.length > 0 && event.target.desired_amounts.value.length > 0) {
+    var desired_amounts : (Principal | BigInt)[][] = [];
+    var desired_amount_nat;
+    if (desired_assets.length > 0 && form.desired_amounts.value.length > 0) {
+      desired_amount_nat = Math.floor(form.desired_amounts.value*10**Number(desired_token?.decimals));
       desired_amounts = [[Principal.fromText(desired_assets[0]), BigInt(desired_amount_nat)]];
     }
-    const desired_duration = Number(event.target.desired_duration.value);
-    const desired_interest = Number(event.target.desired_interest.value);
+    const desired_duration = Number(form.desired_duration.value);
+    const desired_interest = Number(form.desired_interest.value);
+
     backend.loanRequestNew(
         collateral_canister_id,
         collateral_amount_nat,
@@ -59,19 +63,33 @@
         desired_amounts,
         desired_duration,
         desired_interest,
-    ).catch((error) => {
+    ).catch((error: unknown) => {
       console.log(error);
-      notification = error;
-      throw(error);
-    }).then((response) => {
+      if (error instanceof Error) {
+        notification = error.message;
+        throw(error);
+      } else {
+        console.log('Unexpected error:', error);
+        // notification = 'Unexpected error: ' + error;
+        notification = 'Unexpected error';
+      }
+    }).then((response : BigInt) => {
+      // console.log(response);
       notification = `Success: Created new Loan Request: <a href="/loan-requests/${response}">#${response}</a>`;
       window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
-      event.target.reset();
+      form.reset();
       invalidate('app:loanrequests');
     });
     return false;
-    } catch(error) {
-        notification = error;
+    } catch(error : unknown) {
+      if (error instanceof Error) {
+        notification = error.message;
+        throw error;
+      } else {
+        console.log('Unexpected error:', error);
+        // notification = 'Unexpected error: ' + error;
+        notification = 'Unexpected error';
+      }
     }
   }
 
@@ -137,7 +155,7 @@
               <input id="collateral_canister_id" class="btn btn-square filter-reset validator" type="radio" name="collateral_canister_id" value="×" aria-label="×" 
                 bind:group={selectedCollateralId}
                 onclick={() => {
-                      selectedCollateralId = null;
+                      selectedCollateralId = "";
                     }}
                 required />
               <div class="validator-hint hidden">Required</div>
@@ -165,7 +183,8 @@
           <!-- Collateral Balance -->
           <!-- {wallet.icrc1_tokens[0].symbol} {wallet.icrc1_tokens[0].balance}  -->
           {#if selectedCollateralId}
-            <span class={[(collateral_amount> wallet.icrc1_balance(selectedCollateralId)) && "text-warning"]}>Balance: {wallet.icrc1_balance(selectedCollateralId)}</span>
+            <!-- TODO account for fees -->
+            <span class={[((collateral_amount ?? 0) > (wallet.icrc1_balance(selectedCollateralId) ?? 0) ) && "text-warning"]}>Balance: {wallet.icrc1_balance(selectedCollateralId)}</span>
             <!-- <span>{wallet.refreshICRC1Token(selectedCollateralId)}</span> -->
 
             {#if (collateral_token?.metadata instanceof(Error))}
@@ -174,7 +193,7 @@
 
           <!-- Collateral Amount Input -->
           <div class="form-control">
-            <label class="label">
+            <label for="collateral_amount" class="label">
               <span class="label-text">Collateral Amount</span>
             </label>
 
@@ -341,26 +360,31 @@
 
           <!-- Duration Input -->
           <div class="form-control">
-            <label class="label">
+            <label for="desired_duration" class="label">
               <span class="label-text">Duration (days)</span>
             </label>
             <input
               type="number"
               name="desired_duration"
+              id="desired_duration"
               placeholder="Enter duration in days"
-              class="input input-bordered input-primary w-full max-w-xs"
+              class="input input-bordered input-primary w-full max-w-xs validator"
 
             />
+            <label for="desired_duration" class="label validator-hint hidden">
+              <div>Whole number of days</div>
+            </label>
           </div>
 
           <!-- Interest Input -->
           <div class="form-control">
-            <label class="label">
+            <label for="desired_interest" class="label">
               <span class="label-text">Interest</span>
             </label>
             <input
               type="number"
               step="0.01"
+              id="desired_interest"
               name="desired_interest"
               placeholder="Enter interest"
               class="input input-bordered input-primary w-full max-w-xs"
