@@ -1,28 +1,36 @@
 <script lang="ts">
-  import { preventDefault } from 'svelte/legacy';
-  import { backend } from "$lib/canisters";
-  import { invalidateAll } from '$app/navigation';
-  import { invalidate } from '$app/navigation';
+  // import { backend } from "$lib/canisters";
   import type { PageProps } from './$types';
   let { data }: PageProps = $props();
   import NewLoanRequestForm from '$lib/components/NewLoanRequestForm.svelte';
-  import { wallet } from '$lib/components/WalletBar.svelte';
+  // import { wallet } from '$lib/components/WalletBar.svelte';
+  let showLoanRequestForm = $state(false);
 </script>
 
 <main>
   <div class="container mx-auto">
     <h1 class="text-xl">Borrow</h1>
 
-    <NewLoanRequestForm/>
+    {#if !showLoanRequestForm}
+      <button 
+        class="btn btn-primary"
+        onclick={() => showLoanRequestForm = true}>
+        New Loan Request
+      </button>
+    {/if}
 
-  <h2>Loan Requests</h2>
+    {#if showLoanRequestForm}
+      <NewLoanRequestForm bind:showLoanRequestForm />
+    {/if}
+
+  <h2>My Loan Requests</h2>
   <!-- <button class="btn" onclick={()=> {invalidate('app:loanrequests'); -->
   <!-- // alert(data.loanRequests.length); -->
   <!--   }}> -->
   <!--   Refresh -->
   <!-- </button> -->
-  {#each data.loanRequests as loanRequest}
-    {console.log(loanRequest)}
+  {#each data.loanRequests.reverse() as loanRequest}
+    <!-- {console.log(loanRequest)} -->
     <a href="/loan-requests/{loanRequest.id}">
     <div class="card">
       <div class="card-body">

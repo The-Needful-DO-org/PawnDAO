@@ -8,6 +8,7 @@
   // import { Icrc1Tokens } from '$lib/Icrc1Tokens.svelte';
   import { refreshAllICRC1Tokens} from '$lib/Icrc1Tokens.svelte';
 
+  let { showLoanRequestForm = $bindable() } = $props();
   let notification = $state("");
   let desired_assets = $state([]);
   let selectedCollateralId = $state("");
@@ -39,8 +40,6 @@
     // }
 
     // TODO support multiple desired assets
-    const testing = Array.from(form.desired_asset_canister_ids);
-    console.log(testing);
     const desired_asset_canister_ids : Principal[] = Array.from(form.desired_asset_canister_ids)
       .filter((radio): radio is HTMLInputElement => (radio as HTMLInputElement).checked)
       .map(radio => Principal.fromText(radio.value));
@@ -79,6 +78,7 @@
       window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
       form.reset();
       invalidate('app:loanrequests');
+      showLoanRequestForm = false;
     });
     return false;
     } catch(error : unknown) {

@@ -5,13 +5,9 @@ import { HttpAgent } from "@dfinity/agent";
 
 
 async function getLoanRequests() {
-  if (process.env.DFX_NETWORK !== "ic") {
-  // Only in local/dev, never on mainnet:
-    const agent = new HttpAgent({ /* no identity = anonymous */ });
-    await agent.fetchRootKey();
-  }
   // const loanRequests = await backend.loanRequestsAll();
   const loanRequests = await backend.loanRequestsAll().then((response) => {
+  // const loanRequests = await backend.loanRequestsGetByUserNot(user_id ).then((response) => {
     return response;
   });
   // console.log(loanRequests);
@@ -19,6 +15,13 @@ async function getLoanRequests() {
 
 }
 export const load: PageLoad = async () => {
+  const agent = new HttpAgent({ /* no identity = anonymous */ });
+  if (process.env.DFX_NETWORK !== "ic") {
+  // Only in local/dev, never on mainnet:
+    await agent.fetchRootKey();
+  }
+
+const user_id = (await agent.getPrincipal());
   // const response = await fetch('https://jsonplaceholder.typicode.com/posts');
   // const loanRequests = await backend.loanRequestsAll().then((response) => {
   //   return response;
@@ -26,7 +29,8 @@ export const load: PageLoad = async () => {
 	// if (params.slug === 'hello-world') {
 		return {
       // loanRequests: loanRequests
-      loanRequests: getLoanRequests()
+      loanRequests: getLoanRequests(),
+      current_user_id: user_id
 		};
 	// }
 
