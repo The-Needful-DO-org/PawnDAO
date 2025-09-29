@@ -103,10 +103,18 @@ async function icrc1_metadata(canister_id : string) {
 
 }
 
+  type WalletICRC1Token = {canister_id : string,
+   watched? : boolean,
+   decimals? : BigInt,
+   metadata? : [string, object]
+   fee? : BigInt,
+   symbol? : string,
+   balance? : BigInt}
+
   class Wallet {
     data = $state();
 
-    icrc1_tokens = $state([
+    icrc1_tokens : WalletICRC1Token[] = $state([
       {
         canister_id: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
         // symbol: "LICP",

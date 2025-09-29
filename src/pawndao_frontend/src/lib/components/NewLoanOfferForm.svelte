@@ -27,7 +27,7 @@
   // let loan_asset_canister_id = $state();
   let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === desired_assets[0]));
 
-  let loan_amount = $state(Number(desired_amount_nat) / 10**Number(desired_token.decimals));
+  let loan_amount = $state(Number(desired_amount_nat) / 10**Number(desired_token?.decimals));
   let offer_duration =$state(desired_duration);
   let offer_interest =$state(desired_interest);
 
@@ -37,6 +37,7 @@
 
 // Add this function to handle loanOfferNew
   async function createLoanOffer() {
+    try {
     const form = document.getElementById("LoanOfferForm");
     const loan_request_id = loan_request.id;
     const loan_asset_canister_id = Principal.fromText(form.loan_asset_canister_id.value);
@@ -57,6 +58,9 @@
     } catch (e) {
       notification = "Error creating loan offer: " + e;
     }
+  } catch(error) {
+    notification = error;
+  }
   }
 </script>
 
@@ -84,6 +88,9 @@
             <!-- /> -->
             <div class="filter">
               <input disabled id="icp-btn" bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
+              {#if (process.env.DFX_NETWORK !== "ic")}
+              <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" required />
+              {/if}
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
@@ -107,8 +114,8 @@
               <span class="label-text">Collateral Amount</span>
             </label>
             <input
-              value={Number(collateral_amount) / 10**Number(collateral_token.decimals)}
-              type="number"
+              value={(Number(collateral_amount) / 10**Number(collateral_token?.decimals)) || collateral_amount + " nat"}
+              type="text"
               name="collateral_amount"
               placeholder="Enter amount"
               class="input input-bordered input-primary w-full max-w-xs"
@@ -212,6 +219,9 @@
                     }}
                 />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" />
+              {#if (process.env.DFX_NETWORK !== "ic")}
+              <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" />
+              {/if}
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" />
@@ -234,15 +244,19 @@
               <span class="label-text">Desired Amount: </span>
             </label>
             {#if desired_assets.length > 0}
+              {#if desired_amount_nat === null}
+                <span>Any</span>
+              {:else}
               <input
                 type="text"
-                value={Number(desired_amount_nat) / 10**Number(desired_token.decimals) || desired_amount_nat + " nat"}
+                value={Number(desired_amount_nat) / 10**Number(desired_token?.decimals) || desired_amount_nat + " nat"}
                 name="desired_amounts"
                 placeholder="Enter desired asset amount (optional)"
                 class="input input-bordered input-primary w-full max-w-xs"
                 disabled
 
               />
+              {/if}
             {:else}
               <span>Any</span>
             {/if}
@@ -314,6 +328,9 @@
                     }}
                 />
               <input id="icp-btn" bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
+              {#if (process.env.DFX_NETWORK !== "ic")}
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" required />
+              {/if}
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />

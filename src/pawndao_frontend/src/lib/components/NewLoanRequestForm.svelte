@@ -10,20 +10,25 @@
 
   let notification = $state("");
   let desired_assets = $state([]);
-  let selectedCollateralId = $state();
+  let selectedCollateralId = $state("");
   let collateral_amount = $state();
   let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === selectedCollateralId));
   let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === desired_assets[0]));
   refreshAllICRC1Tokens();
 
-  function loanRequestSubmit(event) {
+  function loanRequestSubmit(event : Event) {
     event.preventDefault();
     try {
+    if (!event.target) throw "Error: Form not found";
+    let form = event.target as HTMLFormElement;
+    if (!collateral_token) throw "Collateral Token not found";
+
+
     // console.log(event.target.collateral_canister_id);
     // console.log(typeof(event.target.collateral_canister_id));
-    console.log(event);
-    const collateral_canister_id = Principal.fromText(event.target.collateral_canister_id.value);
-    const collateral_amount = Number(event.target.collateral_amount.value);
+    // console.log(event);
+    const collateral_canister_id = Principal.fromText(form.collateral_canister_id.value);
+    const collateral_amount = Number(form.collateral_amount.value);
     const collateral_amount_nat = Math.floor(collateral_amount*10**Number(collateral_token.decimals));
     // const desired_asset_canister_ids = event.target.desired_asset_canister_ids.value;
     // const desired_asset_canister_ids = [Principal.fromText(event.target.desired_asset_canister_ids.value)];
@@ -74,7 +79,7 @@
       // console.log('effect');
       // console.log('collateral changed:', selectedCollateralId);
       if (selectedCollateralId) {
-        // wallet.addICRC1Token(selectedCollateralId);
+        wallet.addICRC1Token(selectedCollateralId);
 
         // TODO this is sloppy bro but wtv keep going
         // if (!Icrc1Tokens.find((token) => token.canister_id === selectedCollateralId)) {
@@ -82,6 +87,14 @@
         //   Icrc1Tokens.unshift({canister_id: selectedCollateralId});
         //   refreshAllICRC1Tokens();
         // }
+      }
+  });
+
+  $effect(() => {
+      // console.log('effect');
+      // console.log('collateral changed:', selectedCollateralId);
+      if (desired_assets[0]) {
+        wallet.addICRC1Token(desired_assets[0] );
       }
   });
 
@@ -129,7 +142,9 @@
                 required />
               <div class="validator-hint hidden">Required</div>
               <input bind:group={selectedCollateralId} id="icp-btn" class="btn validator" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
+              {#if (process.env.DFX_NETWORK !== "ic")}
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" required />
+              {/if}
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
@@ -153,6 +168,10 @@
             <span class={[(collateral_amount> wallet.icrc1_balance(selectedCollateralId)) && "text-warning"]}>Balance: {wallet.icrc1_balance(selectedCollateralId)}</span>
             <!-- <span>{wallet.refreshICRC1Token(selectedCollateralId)}</span> -->
 
+            {#if (collateral_token?.metadata instanceof(Error))}
+              <span class="badge badge-error">Error loading token</span>
+            {/if}
+
           <!-- Collateral Amount Input -->
           <div class="form-control">
             <label class="label">
@@ -170,7 +189,10 @@
               class="input input-bordered input-primary w-full max-w-xs join-item validator"
               required
             />
-            <label for="collateral_amount" class="input join-item">
+            <!-- {console.log(collateral_token)} -->
+            <!-- {console.log(collateral_token?.metadata?.constructor.name)} -->
+            <!-- <label for="collateral_amount" class={["input join-item", collateral_token?.metadata?.constructor.name === '_RejectError' ? "text-error" : ""]}> -->
+            <label for="collateral_amount" class={["input join-item", (collateral_token?.metadata instanceof(Error)) ? "text-error" : ""]}>
               {collateral_token?.symbol || "Unknown"}</label>
             </div>
           </div>
@@ -270,6 +292,9 @@
                     }}
                 />
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" />
+              {#if (process.env.DFX_NETWORK !== "ic")}
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" />
+              {/if}
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" />
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" />
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" />
@@ -292,7 +317,10 @@
               <span class="label-text">Desired Amount: </span>
             </label>
             {#if desired_assets.length > 0}
-              
+              {#if (desired_token?.metadata instanceof(Error))}
+                <span class="badge badge-error">Error loading token</span>
+              {/if}
+
               <div class="join">
               <input
                 type="number"
@@ -303,7 +331,7 @@
                 class="input input-bordered input-primary w-full max-w-xs join-item validator"
 
               />
-                <label for="desired_amounts" class="input join-item">
+                <label for="desired_amounts" class={["input join-item", (desired_token?.metadata instanceof(Error)) ? "text-error" : ""]}>
                  {desired_token?.symbol || "Unknown"}</label>
               </div>
             {:else}
@@ -342,7 +370,10 @@
 
           <!-- Submit Button -->
           <div class="flex flex-col md:flex-row gap-2 md:gap-4 justify-center items-center">
-            <button type="submit" class="btn btn-active btn-primary btn-block max-w-[200px]">
+            <button type="submit" class="btn btn-active btn-primary btn-block max-w-[200px]"
+              disabled={!(collateral_token?.metadata instanceof(Array)) || (desired_token && !(desired_token?.metadata instanceof(Array)))}
+              >
+              <!-- disabled={(collateral_token?.metadata instanceof(Error)) || (desired_token?.metadata instanceof(Error))} -->
               Submit
             </button>
             <!-- <button type="reset" class="btn btn-outline btn-primary btn-block max-w-[200px]"> -->
