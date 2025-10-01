@@ -1,10 +1,19 @@
 <script lang="ts">
-  // import { backend } from "$lib/canisters";
+  import { backend } from "$lib/canisters";
   import type { PageProps } from './$types';
+  import { onMount } from 'svelte';
   let { data }: PageProps = $props();
   import NewLoanRequestForm from '$lib/components/NewLoanRequestForm.svelte';
-  // import { wallet } from '$lib/components/WalletBar.svelte';
+  import { wallet } from '$lib/components/WalletBar.svelte';
+  import type { LoanOffer } from "../../../../declarations/pawndao_backend/pawndao_backend.did";
   let showLoanRequestForm = $state(false);
+
+  // TODO cleaner solution for loan offer count
+  let allLoanOffers : LoanOffer[] = $state([]);
+
+  onMount(async() => {
+    allLoanOffers = await backend.loanOffersAll();
+  });
 </script>
 
 <main>
@@ -29,24 +38,50 @@
   <!--   }}> -->
   <!--   Refresh -->
   <!-- </button> -->
-  {#each data.loanRequests.reverse() as loanRequest}
-    <!-- {console.log(loanRequest)} -->
-    <a href="/loan-requests/{loanRequest.id}">
-    <div class="card">
-      <div class="card-body">
+  <div class="my-loan-requests flex flex-wrap gap-1 justify-center w-full">
+  <!-- <div class="my-loan-requests grid grid-cols auto-rows-fr"> -->
+    {#each data.loanRequests.reverse() as loanRequest}
+      <!-- {console.log(loanRequest)} -->
+      {@const collateral_token = wallet.icrc1_tokens.find(token => token.canister_id == loanRequest.collateral_canister_id)}
+      <a class="w-full md:w-1/4" href="/loan-requests/{loanRequest.id}">
+        <!-- <div class="h-full card card-border bg-base-300 shadow-sm"> -->
+        <div class="card h-full card-border bg-base-300 image-full shadow-sm">
+          <!-- TODO scalable asset logo handler -->
+          {#if collateral_token?.canister_id == "ryjl3-tyaaa-aaaaa-aaaba-cai"}
+          <figure>
+            <img 
+              src="/icrc1_logos/ryjl3-tyaaa-aaaaa-aaaba-cai.ico"
+              alt="{collateral_token?.symbol} ICRC1 Logo" />
+          </figure>
+          {/if}
+          <div class="card-body">
 
-        <span>User: </span>
-        <span>{loanRequest.user_id}</span>
+            <p>
+            <span>Borrower: </span>
+            <span>{loanRequest.user_id}</span>
+            </p>
 
-        <span>{loanRequest.collateral_canister_id}</span>
-        <span>{loanRequest.collateral_amount}</span>
-        
-      </div>
+            <div>
+              <span>Status:</span> <span class="badge">{Object.entries(loanRequest.status)[0][0]}</span>
+            </div>
 
-    </div>
-    </a>
-  {/each}
+            <p>
+            <span>Collateral: </span>
+            <!-- <span>{wallet.icrc1_tokens.find(token => token.canister_id == loanRequest.collateral_canister_id)?.symbol || loanRequest.collateral_canister_id}</span> -->
+            <span>{collateral_token?.symbol || loanRequest.collateral_canister_id}</span>
+            <span>{ Number(loanRequest.collateral_amount) / 10**Number(collateral_token?.decimals) || loanRequest.collateral_amount + "nat"}</span>
+            </p>
 
+            <div>
+              <span>Offers:</span> <span>{allLoanOffers?.filter(offer => offer.loan_request_id == loanRequest.id && Object.entries(offer.status)[0][0] == "Pending").length}</span>
+            </div>
+
+          </div>
+
+        </div>
+      </a>
+    {/each}
+  </div>
     <!-- <form class="form-control gap-4 mt-6" onsubmit={loanRequestSubmit}> -->
     <!--   <label for="collateral_canister_id" class="label"> -->
     <!--     <span class="w-48">Collateral Canister ID</span> -->
