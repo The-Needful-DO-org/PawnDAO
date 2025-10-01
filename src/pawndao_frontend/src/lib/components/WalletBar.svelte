@@ -619,9 +619,9 @@ $effect(() => {
 
 
 
-<div class=" sticky  top-15 z-1000">
+<div class="sticky  top-15 z-1000 container mx-auto">
 
-  <div id="walletBar" class="absolute top-0 right-0 text-white text-sm text-shadow-cloud text-right">
+  <div id="walletBar" class="absolute top-2 right-2 md:right-0 lg:-right-48 text-white text-sm text-shadow-cloud text-right">
 
     {#if isWalletBarExpanded}
       <button class={["rounded-full btn btn-warning", !isWalletBarEdit && 'btn-outline']}
