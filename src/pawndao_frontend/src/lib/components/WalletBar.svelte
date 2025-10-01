@@ -1,14 +1,14 @@
 <script lang="ts" module>
 
 // serialize functions to store BigInt
-function serialize(value) {
-  return JSON.stringify(value, (key, value) =>
+function serialize(value : Object) {
+  return JSON.stringify(value, (_key, value) =>
     typeof value === 'bigint' ? value.toString() : value
   );
 }
 
-function deserialize(str) {
-  return JSON.parse(str, (key, value) =>
+function deserialize(str : string) {
+  return JSON.parse(str, (_key, value) =>
     /(?:^|[^\d])(\d{15,})(?:[^\d]|$)/.test(value) ? BigInt(value) : value
   );
 }
@@ -36,7 +36,9 @@ function updateOrAddObject(arr, canisterId, newObject) {
 
 async function icrc_balance(canister_id : string) {
 
-  const agent = new HttpAgent({ /* no identity = anonymous */ });
+  // const agent = new HttpAgent({ /* no identity = anonymous */ });
+  // const agent = await HttpAgent.create({ /* no identity = anonymous */ });
+  const agent = HttpAgent.createSync({ /* no identity = anonymous */ });
   if (process.env.DFX_NETWORK !== "ic") {
   // Only in local/dev, never on mainnet:
     await agent.fetchRootKey();
@@ -45,10 +47,10 @@ async function icrc_balance(canister_id : string) {
   // console.log(`${await agent.getPrincipal()}`);
   const principal = await agent.getPrincipal();
 
-    const { metadata } = IcrcLedgerCanister.create({
-      agent,
-      canisterId: Principal.fromText(canister_id),
-    });
+    // const { metadata } = IcrcLedgerCanister.create({
+    //   agent,
+    //   canisterId: Principal.fromText(canister_id),
+    // });
 
     const { balance } = IcrcLedgerCanister.create({
       agent,
@@ -65,7 +67,7 @@ async function icrc_balance(canister_id : string) {
 
     try {
         // Code that might throw an error
-        const meta_response = await metadata({certified: false});
+        // const meta_response = await metadata({certified: false});
         // console.log(meta_response);
         // icrcBalances[canister_id].metadata = meta_response;
         // return meta_response;
@@ -706,12 +708,12 @@ $effect(() => {
 
       {#if !showAddTokenInput}
         <button class="btn btn-primary btn-outline btn-xs"
-                onclick={showAddTokenInput = !showAddTokenInput}
+                onclick={() => showAddTokenInput = !showAddTokenInput}
         >+ Add Token</button>
       {:else}
         <div class="join">
         <button class="btn btn-error btn-xs join-item"
-                onclick={showAddTokenInput = !showAddTokenInput}
+                onclick={() => showAddTokenInput = !showAddTokenInput}
         >×</button>
         <input class="input input-xs join-item" type="text" placeholder="canister-id" id="walletAddToken" name="walletAddToken"
                onkeydown={(e)=> { e.key === 'Enter' ? walletAddTokenButton!.click() : null }}
