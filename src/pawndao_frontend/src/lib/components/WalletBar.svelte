@@ -8,9 +8,22 @@ function serialize(value : Object) {
 }
 
 function deserialize(str : string) {
-  return JSON.parse(str, (_key, value) =>
-    /(?:^|[^\d])(\d{15,})(?:[^\d]|$)/.test(value) ? BigInt(value) : value
-  );
+  return JSON.parse(str, (_key, value) => {
+    // console.log(_key);
+    // console.log(value);
+    // original bigint regexp from llm
+    // /(?:^|[^\d])(\d{15,})(?:[^\d]|$)/.test(value) ? BigInt(value) : value
+    // TODO better bigint regexp because this matches base64 logo data
+    if (/(?:^|[^\d])(\d{15,})(?:[^\d]|$)/.test(value)) {
+      try {
+      return BigInt(value);
+      } catch {
+      return value; 
+      }
+    } else {
+      return value;
+    }
+  });
 }
 
 // helper to parse icrc1_metadata
@@ -99,7 +112,7 @@ async function icrc1_metadata(canister_id : string) {
   }
   // console.log(agent);
   // console.log(`${await agent.getPrincipal()}`);
-  const principal = await agent.getPrincipal();
+  // const principal = await agent.getPrincipal();
 
     const { metadata } = IcrcLedgerCanister.create({
       agent,
@@ -125,13 +138,14 @@ async function icrc1_metadata(canister_id : string) {
    metadata? : [string, object]
    fee? : BigInt,
    symbol? : string,
+   logo? : string,
    balance_nat? : BigInt,
    balance? : Number}
 
   class Wallet {
     data = $state();
 
-    icrc1_tokens : WalletICRC1Token[] = $state([
+    default_icrc1_tokens : WalletICRC1Token[] = [
       {
         canister_id: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
         // symbol: "LICP",
@@ -152,7 +166,8 @@ async function icrc1_metadata(canister_id : string) {
         symbol: "LICP",
         watched: false
       },
-    ]);
+    ];
+    icrc1_tokens : WalletICRC1Token[] = $state(this.default_icrc1_tokens);
 
     watched_icrc1_tokens = $derived(this.icrc1_tokens.filter(token => token.watched));
  
@@ -165,6 +180,7 @@ async function icrc1_metadata(canister_id : string) {
             token.symbol = map.get("icrc1:symbol");        // Text -> e.g., "XTKN"
             token.decimals = map.get("icrc1:decimals");    // Nat  -> e.g., 8n
             token.fee = map.get("icrc1:fee");              // Nat  -> e.g., 10000n
+            token.logo = map.get("icrc1:logo");              // Nat  -> e.g., 10000n
           })
           .catch((error) => {console.error(error); });
         }
@@ -246,11 +262,24 @@ async function icrc1_metadata(canister_id : string) {
     return true;
   }
 
+  principal : Principal | undefined = $state();
+
+  getPrincipal = async () => {
+    const agent = HttpAgent.createSync({ /* no identity = anonymous */ });
+    this.principal = await agent.getPrincipal();
+    return this.principal;
+  }
+
+
 }
   
 export const wallet = new Wallet();
 const savedICRC1Tokens = localStorage.getItem('icrc1tokens');
 if (savedICRC1Tokens) wallet.icrc1_tokens = deserialize(savedICRC1Tokens);
+if (!wallet.icrc1_tokens) {
+  alert("Wallet Error loading saved ICRC1 Token data");
+  wallet.icrc1_tokens = wallet.default_icrc1_tokens;
+}
 
 // localStorage.setItem('icrc1tokens', JSON.stringify(wallet.icrc1_tokens));
 </script>
@@ -621,7 +650,7 @@ $effect(() => {
 
 <div class="sticky  top-15 z-1000 container mx-auto">
 
-  <div id="walletBar" class="absolute top-2 right-2 md:right-0 lg:-right-48 text-white text-sm text-shadow-cloud text-right">
+  <div id="walletBar" class="absolute top-2 right-2 md:right-0 lg:-right-6 text-white text-sm text-shadow-cloud text-right">
 
     {#if isWalletBarExpanded}
       <button class={["rounded-full btn btn-warning", !isWalletBarEdit && 'btn-outline']}
@@ -649,8 +678,49 @@ $effect(() => {
 
     {#if isWalletBarExpanded}
       <div class="walletBarExpanded bg-[#111111] p-2 max-h-[70vh] overflow-auto">
-      <p class="bg-primary">
-        TODO Principal
+      <p class="bg-neutral">
+        {#await wallet.getPrincipal()}
+          <span class="loading loading-ring loading-xs"></span>
+        {:then}
+          <button onclick={
+            async () => {
+                try {
+                  const text = wallet?.principal?.toString() || "None";
+                  await navigator.clipboard.writeText(text);
+                  console.log('Content copied to clipboard');
+                } catch (err) {
+                  console.error('Failed to copy: ', err);
+                }
+              }
+          }>
+            ⧉
+          </button>
+          <span class="tooltip tooltip-left before:z-2000 z-2000"
+                data-tip="Click to Copy"
+                role="button"
+                tabindex="0"
+                aria-roledescription="Click to Copy Principal"
+                onkeypress={()=>console.log("keypress on principal")}
+                onmouseenter={(e)=>
+                        e.target.dataset.tip = "Click to Copy" }
+                onfocus={(e)=>
+                        e.target.dataset.tip = "Click to Copy" }
+                onclick={
+                  async (e) => {
+                      try {
+                        const text = wallet?.principal?.toString() || "None";
+                        await navigator.clipboard.writeText(text);
+                        console.log('Content copied to clipboard');
+                        e.target.dataset.tip = "Copied!";
+                      } catch (err) {
+                        console.error('Failed to copy: ', err);
+                      }
+                    }
+                }
+          >
+            {wallet.principal?.toString()}
+          </span>
+        {/await}
       </p>
       {#if isWalletBarEdit}
         <h3 class="font-bold bg-success">Watched Tokens</h3>

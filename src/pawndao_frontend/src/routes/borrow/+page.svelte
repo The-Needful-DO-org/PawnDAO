@@ -48,10 +48,31 @@
         <div class="card h-full card-border bg-base-300 image-full shadow-sm">
           <!-- TODO scalable asset logo handler -->
           {#if collateral_token?.canister_id == "ryjl3-tyaaa-aaaaa-aaaba-cai"}
-          <figure>
+            <figure
+
+              >
             <img 
+              class="max-w-full max-h-96"
+              loading = "lazy"
               src="/icrc1_logos/ryjl3-tyaaa-aaaaa-aaaba-cai.ico"
               alt="{collateral_token?.symbol} ICRC1 Logo" />
+          </figure>
+          {:else if collateral_token?.canister_id == "llcdy-4qaaa-aaaah-arcua-cai"}
+          <figure>
+            <img 
+              class="max-w-full max-h-96"
+              loading = "lazy"
+              src={collateral_token.logo || "/icrc1_logos/llcdy-4qaaa-aaaah-arcua-cai.svg"}
+              alt="{collateral_token.symbol} ICRC1 Logo" />
+          </figure>
+          {:else if collateral_token?.logo}
+          <figure>
+            <!-- TODO broken logo handler -->
+            <img 
+              class="max-w-full max-h-96"
+              loading = "lazy"
+              src={collateral_token.logo}
+              alt="{collateral_token.symbol} ICRC1 Logo" />
           </figure>
           {/if}
           <div class="card-body">
@@ -62,7 +83,7 @@
             </p>
 
             <div>
-              <span>Status:</span> <span class="badge">{Object.entries(loanRequest.status)[0][0]}</span>
+              <span>Status:</span> <span class="badge bg-neutral/40">{Object.entries(loanRequest.status)[0][0]}</span>
             </div>
 
             <p>
