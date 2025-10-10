@@ -313,6 +313,22 @@ public type Loan = {
     return loan_offer;
   };
 
+  // TODO store loan offers standalone not nested under users
+  public shared func loanOfferByIdAsync(loan_offer_id : Nat) : async LoanOffer {
+    var maybe_loan_offer : ?LoanOffer = null;
+    for ((_, l) in Map.entries(userLoanOffers)) { // iterator over entries [[Map entries](https://internetcomputer.org/docs/motoko/core/Map#function-entries)]
+      let va = List.toVarArray<LoanOffer>(l);    // List<T> -> [var T] [[List toVarArray](https://internetcomputer.org/docs/motoko/core/List#function-tovararray)]
+      let a = Array.fromVarArray<LoanOffer>(va);  // [var T] -> [T] [[fromVarArray](https://internetcomputer.org/docs/motoko/core/List#function-fromvararray)]
+      List.forEach<LoanOffer>(l, func (offer) {
+        if (offer.id == loan_offer_id ) {
+          maybe_loan_offer := ?offer;
+        }
+      });
+    };
+    let ?loan_offer = maybe_loan_offer;
+    return loan_offer;
+  };
+
   public shared(msg) func loanOfferCollateralWithdraw(
     loan_offer_id : Nat,
     ) : async LoanOffer {
@@ -779,3 +795,22 @@ public type Loan = {
   };
 
 };
+
+
+// TODO validate anonymous
+// import Principal "mo:core/Principal";
+// import Error "mo:core/Error";
+//
+// // Centralized helper function
+// func rejectIfAnonymous(caller: Principal) : async () {
+//     if (Principal.isAnonymous(caller)) {
+//         throw Error.reject("Anonymous principal not allowed");
+//     };
+// };
+//
+// // Usage in a shared function
+// public shared(msg) func myFunction() : async () {
+//     await rejectIfAnonymous(msg.caller);
+//     // Proceed with authenticated logic
+// };
+//

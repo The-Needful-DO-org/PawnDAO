@@ -1,10 +1,9 @@
 <script lang="ts">
+  let { loan_offer, loan_request } = $props();
   import { backend } from "$lib/canisters";
   import { onMount } from "svelte";
   import type { PageProps } from './$types';
-  import type { LoanOffer as loanOffer, LoanRequest as loanRequest } from '../../../../../declarations/pawndao_backend/pawndao_backend.did.d.ts'; 
-  import LoanRequest from "$lib/components/LoanRequest.svelte";
-  import LoanOffer from "$lib/components/LoanOffer.svelte";
+  import type { LoanOffer as loanOffer, LoanRequest } from '../../../../../../../declarations/pawndao_backend/pawndao_backend.did.d.ts'; 
   import { Principal } from "@dfinity/principal";
   import { createAgent } from "@dfinity/utils";
   import { LedgerCanister } from "@dfinity/ledger-icp";
@@ -16,13 +15,16 @@
   import { HttpAgent } from "@dfinity/agent";
   import { icrc1_balance, icrc1_decimals } from "$lib/icrc_functions";
   import { wallet } from '$lib/components/WalletBar.svelte';
+  import LoanOffer from '$lib/components/LoanOffer.svelte';
 
 
 
-	let { data }: PageProps = $props();
-  let loan_offers = $state(data.loanOffers);
+  // let { data }: PageProps = $props();
+  // let loan_request = $state(data.loanRequest);
+  // let loan_offer = $state(data.loanOffer);
   // let collateral_token_ledger =
   let collateral_decimals = $state();
+  let validate_funds_function = $state(validateLoanOfferFunds(loan_offer));
 
   onMount(async () => {
     const agent = await HttpAgent.create({});
@@ -40,7 +42,7 @@
 
     const collateral_ledger = IcrcLedgerCanister.create({
       agent,
-      canisterId: data.loanRequest.collateral_canister_id,
+      canisterId: loan_request.collateral_canister_id,
     });
 
     try {
@@ -59,7 +61,7 @@
   //   return new Promise(resolve => setTimeout(resolve, ms));
   // }
 
-  async function validateLoanOfferFunds(loan_offer) {
+  async function validateLoanOfferFunds(loan_offer : loanOffer) {
   let isValid = true;
   let validations = [];
   // let validations = {
@@ -68,12 +70,12 @@
   //   }
 
     // validate collateral balance
-    const loan_requester_principal = data.loanRequest.user_id;
-    const collateral_canister_id = data.loanRequest.collateral_canister_id;
+    const loan_requester_principal = loan_request.user_id;
+    const collateral_canister_id = loan_request.collateral_canister_id;
     const collateral_balance_nat = await icrc1_balance(loan_requester_principal, collateral_canister_id);
     const collateral_decimals : Number = await icrc1_decimals(collateral_canister_id);
     const collateral_balance_float = Number(collateral_balance_nat) / 10**Number(collateral_decimals);
-    if (collateral_balance_nat < data.loanRequest.collateral_amount) { // TODO account for fee
+    if (collateral_balance_nat < loan_request.collateral_amount) { // TODO account for fee
       isValid = false;
       validations.push([false, "Collateral Funds Unavailable"]);
     } else {
@@ -106,7 +108,7 @@
   // const allowance_args = {
   const allowance_args : AllowanceParams = {
     account: {
-      owner: data.loanRequest.user_id,
+      owner: loan_request.user_id,
       subaccount: []
     },
     spender: {
@@ -121,7 +123,7 @@
     // console.log(collateral_allowance);
     // console.log(collateral_allowance_float);
     // alert(collateral_allowance.allowance);
-    if (collateral_allowance_nat < data.loanRequest.collateral_amount) {
+    if (collateral_allowance_nat < loan_request.collateral_amount) {
       isValid = false;
       validations.push([false, "Collateral Allowance Unavailable"]);
     } else {
@@ -178,10 +180,10 @@
 
   async function refreshLoanOffers() {
     // TODO a backend query for loanoffers by loanrequest id
-    const loanOffersAll:loanOffer[] = await backend.loanOffersAll().then((response:loanOffer[]) => {
+    const loanOffersAll:LoanOffer[] = await backend.loanOffersAll().then((response:LoanOffer[]) => {
       return response;
     });
-    const loanOffers:loanOffer[] = Array.from(loanOffersAll).filter((offer:loanOffer) => { return offer.loan_request_id === data.loanRequest.id });
+    const loanOffers:LoanOffer[] = Array.from(loanOffersAll).filter((offer:LoanOffer) => { return offer.loan_request_id === loan_request.id });
     loan_offers = loanOffers;
   }
 
@@ -255,7 +257,7 @@
     } catch (e) {
       if (e.message.match("InsufficientAllowance")) {
         // TODO calculate amount to approve
-        const icrc2_approve_response = icrc2_approve(data.loanRequest.collateral_canister_id)
+        const icrc2_approve_response = icrc2_approve(loan_request.collateral_canister_id)
           .catch((error) => {
             alert(error);
             console.error("henlo");
@@ -269,7 +271,7 @@
           });
         // console.log(icrc2_approve_response );
         // alert(icrc2_approve_response );
-        // alert(data.loanRequest.collateral_canister_id);
+        // alert(loan_request.collateral_canister_id);
         // alert("Error InsufficientAllowance " + e);
       } else {
         alert("Error accepting loan offer: " + e);
@@ -327,66 +329,83 @@
     refreshLoanOffers();
   }
 </script>
-
-<main>
-  {#if !data.loanRequest}
-    Not found
-  {:else}
-    <a href="/loan-requests/{data.loanRequest.id}">
-      <h1>Loan Request #{data.loanRequest.id}</h1>
-    </a>
-
-    <a href="/loan-requests/{data.loanRequest.id}/offers/new">
-      <span class="btn btn-secondary">Make Offer</span>
-    </a>
-    <!-- {console.log(data.loanRequest)} -->
-    <!-- {console.log(data.loanOffers)} -->
-
-    <LoanRequest loan_request={data.loanRequest} />
-
-      <!-- <div class="card"> -->
-      <!--   <div class="card-body"> -->
-      <!---->
-      <!--     <div> -->
-      <!--     <span>User: </span> -->
-      <!--     <span>{data.loanRequest.user_id}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>collateral_canister_id: </span> -->
-      <!--     <span>{data.loanRequest.collateral_canister_id}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>collateral_amount: </span> -->
-      <!--     <span>{Number(data.loanRequest.collateral_amount) / 10**Number(collateral_decimals) || data.loanRequest.collateral_amount + "n"}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!--      -->
-      <!--     <span>desired_asset_canister_ids</span> -->
-      <!--     <span>{data.loanRequest.desired_asset_canister_ids}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>desired_amounts</span> -->
-      <!--     <span>{data.loanRequest.desired_amounts}</span> -->
-      <!--     <span>desired_duration</span> -->
-      <!--     <span>{data.loanRequest.desired_duration}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>desired_interest</span> -->
-      <!--     <span>{data.loanRequest.desired_interest}</span> -->
-      <!--     </div> -->
-      <!--   </div> -->
-      <!---->
-      <!-- </div> -->
-
-      <div>
-        <h2>My Loan Offers</h2>
-        {#each loan_offers.filter((loan_offer:loanOffer) => loan_offer.user_id.toString() == wallet.principal?.toString()) as loan_offer}
-          <LoanOffer loan_request={data.loanRequest} loan_offer={loan_offer} />
-        {/each}
-
-        <h2>Loan Offers by others</h2>
-        {#each loan_offers.filter((loan_offer:loanOffer) => loan_offer.user_id.toString() != wallet.principal?.toString()) as loan_offer}
-          <LoanOffer loan_request={data.loanRequest} loan_offer={loan_offer} />
-        {/each}
+<div>
+  <div class="card mb-4">
+    <div class="card-body">
+      <a href="/loan-requests/{loan_request.id}/offers/{loan_offer.id}" >
+      <div><strong>Offer ID:</strong>
+          {loan_offer.id}
       </div>
-  {/if}
-</main>
+      </a>
+      <div><strong>Status:</strong> {Object.entries(loan_offer.status)[0][0]}</div>
+      <div>
+        <strong>Funds:</strong>
+        <!-- {#await validateLoanOfferFunds(loan_offer) } -->
+        {#await validate_funds_function }
+          <span class="loading loading-ring loading-xs"></span>
+        {:then loan_offer_funds_validation}
+          {#if loan_offer_funds_validation[0] == true}
+            <div class="tooltip tooltip-right" data-tip="All Funds Available">
+              <span class="indicator-item status status-success"></span>
+            </div>
+          {:else}
+            <!-- <div class="tooltip tooltip-right" data-tip={loan_offer_funds_validation[1].join("\r")}> -->
+            <div class="tooltip tooltip-right">
+              <div class="tooltip-content">
+                <ul class="text-left">
+                {#each loan_offer_funds_validation[1] as validation}
+                  <li>
+                    <span class={["indicator-item status", `status-${validation[0] ? "success" : "warning"}`]}></span>
+                    {validation[1]}
+                  </li>
+                {/each}
+                </ul>
+              </div>
+              <span class="indicator-item status status-warning"></span>
+            </div>
+          {/if}
+        {:catch error}
+          <button onclick={()=> validate_funds_function = validateLoanOfferFunds(loan_offer) }>🔄 Try Again</button>
+          <div class="collapse bg-base-100 border-base-300 border">
+            <input type="checkbox" />
+            <div class="collapse-title font-semibold">Error validating funds</div>
+            <div class="collapse-content text-sm">
+              {error}
+            </div>
+          </div>
+        {/await}
+            </div>
+            <div><strong>Lender:</strong> {loan_offer.user_id}</div>
+            <div><strong>Borrower:</strong> {loan_request.user_id}</div>
+            <div><strong>Asset Canister ID:</strong> {loan_offer.loan_asset_canister_id}</div>
+            <div><strong>Amount:</strong> {Number(loan_offer.loan_amount) / 10**Number(wallet?.icrc1_tokens.find((token) => token.canister_id === loan_offer.loan_asset_canister_id.toString())?.decimals) || loan_offer.loan_amount + " nat"}</div>
+            <div><strong>Duration:</strong> {loan_offer.duration}</div>
+            <div><strong>Interest:</strong> {loan_offer.interest}</div>
+            <button class="btn btn-success mt-3" onclick={() => icrc2_approve(loan_request.collateral_canister_id, 0) }>
+              Debug: Collateral Allowance 0
+            </button>
+            {#if wallet.principal?.toString() == loan_request.user_id}
+              <button class="btn btn-success mt-3" onclick={() => loanOfferAccept(loan_offer.id)}>
+                Accept Offer
+              </button>
+              <button class="btn btn-error mt-3" onclick={() => loanOfferReject(loan_offer.id)}>
+                Reject Offer
+              </button>
+              <!-- TODO validate withdraw collateral -->
+              <button class="btn btn-warning mt-3" onclick={() => loanOfferCollateralWithdraw(loan_offer.id)}>
+                Withdraw Collateral
+              </button>
+            {/if}
+            {#if wallet.principal?.toString() == loan_offer.user_id}
+              <!-- TODO validate fund loan button -->
+              <button class="btn btn-info mt-3" onclick={() => loanOfferFundLoan(loan_offer.id)}>
+                Fund Loan
+              </button>
+              <button class="btn btn-error mt-3" onclick={() => loanOfferCancel(loan_offer.id)}>
+                Cancel Offer
+              </button>
+            {/if}
+      </div>
+    </div>
+  </div>
+

@@ -2,9 +2,7 @@
   import { backend } from "$lib/canisters";
   import { onMount } from "svelte";
   import type { PageProps } from './$types';
-  import type { LoanOffer as loanOffer, LoanRequest as loanRequest } from '../../../../../declarations/pawndao_backend/pawndao_backend.did.d.ts'; 
-  import LoanRequest from "$lib/components/LoanRequest.svelte";
-  import LoanOffer from "$lib/components/LoanOffer.svelte";
+  import type { LoanOffer as loanOffer, LoanRequest as loanRequest } from '../../../../../../../declarations/pawndao_backend/pawndao_backend.did.d.ts'; 
   import { Principal } from "@dfinity/principal";
   import { createAgent } from "@dfinity/utils";
   import { LedgerCanister } from "@dfinity/ledger-icp";
@@ -16,11 +14,14 @@
   import { HttpAgent } from "@dfinity/agent";
   import { icrc1_balance, icrc1_decimals } from "$lib/icrc_functions";
   import { wallet } from '$lib/components/WalletBar.svelte';
+  import LoanOffer from '$lib/components/LoanOffer.svelte';
+  import LoanRequest from "$lib/components/LoanRequest.svelte";
 
 
 
 	let { data }: PageProps = $props();
-  let loan_offers = $state(data.loanOffers);
+  let loan_request = $state(data.loanRequest);
+  let loan_offer = $state(data.loanOffer);
   // let collateral_token_ledger =
   let collateral_decimals = $state();
 
@@ -59,7 +60,7 @@
   //   return new Promise(resolve => setTimeout(resolve, ms));
   // }
 
-  async function validateLoanOfferFunds(loan_offer) {
+  async function validateLoanOfferFunds(loan_offer : loanOffer) {
   let isValid = true;
   let validations = [];
   // let validations = {
@@ -178,10 +179,10 @@
 
   async function refreshLoanOffers() {
     // TODO a backend query for loanoffers by loanrequest id
-    const loanOffersAll:loanOffer[] = await backend.loanOffersAll().then((response:loanOffer[]) => {
+    const loanOffersAll:LoanOffer[] = await backend.loanOffersAll().then((response:LoanOffer[]) => {
       return response;
     });
-    const loanOffers:loanOffer[] = Array.from(loanOffersAll).filter((offer:loanOffer) => { return offer.loan_request_id === data.loanRequest.id });
+    const loanOffers:LoanOffer[] = Array.from(loanOffersAll).filter((offer:LoanOffer) => { return offer.loan_request_id === data.loanRequest.id });
     loan_offers = loanOffers;
   }
 
@@ -329,64 +330,24 @@
 </script>
 
 <main>
-  {#if !data.loanRequest}
+  {#if !data.loanOffer}
     Not found
   {:else}
+    <div class="breadcrumbs text-sm">
+      <ul>
+        <li><a href="/loan-requests/">Loan Requests</a></li>
+        <li><a href="/loan-requests/{data.loanRequest.id}">{data.loanRequest.id}</a></li>
+        <li><a href="/loan-requests/{data.loanRequest.id}/offers">Offers</a></li>
+        <li><a href="/loan-requests/{data.loanRequest.id}/offers/{data.loanOffer.id}">{data.loanOffer.id}</a></li>
+      </ul>
+    </div>
     <a href="/loan-requests/{data.loanRequest.id}">
-      <h1>Loan Request #{data.loanRequest.id}</h1>
+      <h1>Loan Offer #{data.loanOffer.id}</h1>
     </a>
 
-    <a href="/loan-requests/{data.loanRequest.id}/offers/new">
-      <span class="btn btn-secondary">Make Offer</span>
-    </a>
     <!-- {console.log(data.loanRequest)} -->
     <!-- {console.log(data.loanOffers)} -->
-
     <LoanRequest loan_request={data.loanRequest} />
-
-      <!-- <div class="card"> -->
-      <!--   <div class="card-body"> -->
-      <!---->
-      <!--     <div> -->
-      <!--     <span>User: </span> -->
-      <!--     <span>{data.loanRequest.user_id}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>collateral_canister_id: </span> -->
-      <!--     <span>{data.loanRequest.collateral_canister_id}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>collateral_amount: </span> -->
-      <!--     <span>{Number(data.loanRequest.collateral_amount) / 10**Number(collateral_decimals) || data.loanRequest.collateral_amount + "n"}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!--      -->
-      <!--     <span>desired_asset_canister_ids</span> -->
-      <!--     <span>{data.loanRequest.desired_asset_canister_ids}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>desired_amounts</span> -->
-      <!--     <span>{data.loanRequest.desired_amounts}</span> -->
-      <!--     <span>desired_duration</span> -->
-      <!--     <span>{data.loanRequest.desired_duration}</span> -->
-      <!--     <div class="divider"></div> -->
-      <!---->
-      <!--     <span>desired_interest</span> -->
-      <!--     <span>{data.loanRequest.desired_interest}</span> -->
-      <!--     </div> -->
-      <!--   </div> -->
-      <!---->
-      <!-- </div> -->
-
-      <div>
-        <h2>My Loan Offers</h2>
-        {#each loan_offers.filter((loan_offer:loanOffer) => loan_offer.user_id.toString() == wallet.principal?.toString()) as loan_offer}
-          <LoanOffer loan_request={data.loanRequest} loan_offer={loan_offer} />
-        {/each}
-
-        <h2>Loan Offers by others</h2>
-        {#each loan_offers.filter((loan_offer:loanOffer) => loan_offer.user_id.toString() != wallet.principal?.toString()) as loan_offer}
-          <LoanOffer loan_request={data.loanRequest} loan_offer={loan_offer} />
-        {/each}
-      </div>
+    <LoanOffer loan_request={data.loanRequest} loan_offer={data.loanOffer} />
   {/if}
 </main>

@@ -1,10 +1,18 @@
 import { error } from '@sveltejs/kit';
 import type { PageLoad } from './$types';
 import { backend } from "$lib/canisters";
+import {HttpAgent} from '@dfinity/agent';
+import type {LoanRequest} from '../../../../declarations/pawndao_backend/pawndao_backend.did';
 
 export const load: PageLoad = async () => {
-  // const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-  const loanRequests = await backend.loanRequestsAll().then((response) => {
+
+  const agent = HttpAgent.createSync();
+  if (process.env.DFX_NETWORK !== "ic") {
+  // Only in local/dev, never on mainnet:
+    await agent.fetchRootKey();
+  }
+
+  const loanRequests = await backend.loanRequestsAll().then((response: LoanRequest[]) => {
     return response;
   });
 	// if (params.slug === 'hello-world') {

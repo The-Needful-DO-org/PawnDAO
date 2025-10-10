@@ -247,10 +247,10 @@ async function icrc1_metadata(canister_id : string) {
       // this.icrc1_tokens.push({canister_id: canister_id, watched: false});
       // this.refreshAllICRC1Tokens();
     }
-    return this.icrc1_tokens.find(obj => obj.canister_id === canister_id)?.balance || "BUnavailable";
+    return this.icrc1_tokens.find(obj => obj.canister_id === canister_id)?.balance || "Unavailable";
   }
 
-  addICRC1Token = (canister_id) => {
+  addICRC1Token = (canister_id : Principal) => {
     const token = this.icrc1_tokens.find(obj => obj.canister_id === canister_id);
     if (token) {
       return false;
@@ -270,6 +270,89 @@ async function icrc1_metadata(canister_id : string) {
     return this.principal;
   }
 
+  // approve ICRC transfer by backend
+  icrc2_approve = async (canister_id : Principal, amount : Number = 42069000000) => {
+
+    //  TODO add auth
+    // const identity = await $auth.identity;
+    // const agent = await createAgent({
+    //   identity,
+    //   host:
+    //     process.env.DFX_NETWORK === "ic"
+    //       ? "https://icp-api.io"
+    //       : "http://127.0.0.1:4944",
+    // });
+
+    const agent = await HttpAgent.create({});
+
+    // Fetch root key for certificate validation during development
+    if (process.env.DFX_NETWORK !== "ic") {
+      agent.fetchRootKey().catch((err) => {
+        console.warn(
+          "Unable to fetch root key. Check to ensure that your local replica is running"
+        );
+        console.error(err);
+      });
+    }
+
+    const { approve } = IcrcLedgerCanister.create({
+      agent,
+      canisterId: canister_id,
+    });
+
+    const approveArgs = {
+      spender: {owner: Principal.fromText(process.env.CANISTER_ID_PAWNDAO_BACKEND),
+                subaccount: [],
+               },
+      amount: amount,
+      };
+
+      // TODO handle errors
+      try {
+          // Code that might throw an error
+          const approval = await approve(approveArgs);
+          console.log("ICRC approval: " + approval);
+      } catch (error) {
+          // Handle the exception
+          console.error('An error occurred:', error.message);
+          console.error('An error occurred:', error);
+          console.error('An error occurred:', error.errorType);
+          throw error;
+      }
+
+  }
+
+  icrc1_total_supply = async (canister_id : Principal) => {
+    const agent = await HttpAgent.create({});
+
+    // Fetch root key for certificate validation during development
+    if (process.env.DFX_NETWORK !== "ic") {
+      agent.fetchRootKey().catch((err) => {
+        console.warn(
+          "Unable to fetch root key. Check to ensure that your local replica is running"
+        );
+        console.error(err);
+      });
+    }
+
+    const { totalTokensSupply } = IcrcLedgerCanister.create({
+      agent,
+      canisterId: canister_id,
+    });
+
+      try {
+          const supply = await totalTokensSupply({});
+          return supply;
+          // console.log("ICRC supply: " + supply );
+      } catch (error) {
+          // Handle the exception
+          console.error('An error occurred:', error.message);
+          console.error('An error occurred:', error);
+          console.error('An error occurred:', error.errorType);
+          throw error;
+      }
+
+  }
 
 }
   
