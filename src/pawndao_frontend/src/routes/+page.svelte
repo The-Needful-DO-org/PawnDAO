@@ -1,8 +1,23 @@
 <script>
   import { preventDefault } from 'svelte/legacy';
+  import { AuthClient } from '@dfinity/auth-client';
+  import { createActor } from '../../../declarations/pawndao_backend';
+  import { canisterId } from '../../../declarations/pawndao_backend';
+  import { auth } from '$lib/auth.svelte.ts'
+  import { whoami } from '$lib/auth.svelte.ts'
+  import { updateActor } from '$lib/auth.svelte.ts'
+  import { login } from '$lib/auth.svelte.ts'
+  import { logout } from '$lib/auth.svelte.ts'
+
 
   // import "../index.scss";
   import { backend } from "$lib/canisters";
+  import {onMount} from 'svelte';
+
+  // Initialize auth client
+  onMount(() => {
+    updateActor();
+  });
 
   let greeting = $state("");
 
@@ -16,6 +31,12 @@
 </script>
 
 <main>
+
+  {auth.principal}
+  <button class="btn" onclick={login}>Login</button>
+  <button class="btn btn-error" onclick={logout}>Logout</button>
+  <button class="btn" onclick={whoami}>whoami</button>
+
   <!-- <div class="hero bg-base-200 min-h-screen"> -->
   <div class="hero bg-base-200 min-h-[calc(100vh-65px)]">
     <div class="hero-content text-center">

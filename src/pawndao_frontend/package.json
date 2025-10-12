@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@dfinity/agent": "^3.0.0",
+    "@dfinity/auth-client": "^3.2.7",
     "@dfinity/candid": "^3.0.0",
     "@dfinity/ledger-icp": "^6.0.0",
     "@dfinity/ledger-icrc": "^4.0.1",

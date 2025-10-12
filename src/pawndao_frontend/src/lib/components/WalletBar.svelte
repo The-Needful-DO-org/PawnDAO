@@ -1,4 +1,10 @@
 <script lang="ts" module>
+  import { auth } from '$lib/auth.svelte.ts'
+  import { whoami } from '$lib/auth.svelte.ts'
+  import { updateActor } from '$lib/auth.svelte.ts'
+  import { login } from '$lib/auth.svelte.ts'
+  import { logout } from '$lib/auth.svelte.ts'
+
 
 // serialize functions to store BigInt
 function serialize(value : Object) {
@@ -58,7 +64,8 @@ async function icrc_balance(canister_id : string) {
   }
   // console.log(agent);
   // console.log(`${await agent.getPrincipal()}`);
-  const principal = await agent.getPrincipal();
+  // const principal = await agent.getPrincipal();
+  const principal = auth.principal;
 
     // const { metadata } = IcrcLedgerCanister.create({
     //   agent,
@@ -265,8 +272,12 @@ async function icrc1_metadata(canister_id : string) {
   principal : Principal | undefined = $state();
 
   getPrincipal = async () => {
-    const agent = HttpAgent.createSync({ /* no identity = anonymous */ });
-    this.principal = await agent.getPrincipal();
+    // const agent = HttpAgent.createSync({ /* no identity = anonymous */ });
+    const identity = auth.authClient.getIdentity();
+    const principal = identity.getPrincipal();
+    // console.log(identity);
+    // console.log(principal);
+    this.principal = principal;
     return this.principal;
   }
 
@@ -412,6 +423,11 @@ let walletAddTokenButton = $state.raw<HTMLElement | null>(null);
 
 wallet.refreshWatchedICRC1Tokens();
 
+// Initialize auth client
+onMount(async () => {
+  updateActor();
+  await wallet.getPrincipal();
+});
 
 async function onSubmitICRC1Transfer(event : Event) {
   event.preventDefault();
@@ -735,6 +751,8 @@ $effect(() => {
 
   <div id="walletBar" class="absolute top-2 right-2 md:right-0 lg:-right-6 text-white text-sm text-shadow-cloud text-right">
 
+    <button class="btn" onclick={login}>Login</button>
+
     {#if isWalletBarExpanded}
       <button class={["rounded-full btn btn-warning", !isWalletBarEdit && 'btn-outline']}
               aria-label="Toggle Wallet Edit" 
@@ -762,10 +780,12 @@ $effect(() => {
     {#if isWalletBarExpanded}
       <div class="walletBarExpanded bg-[#111111] p-2 max-h-[70vh] overflow-auto">
       <p class="bg-neutral">
-        {#await wallet.getPrincipal()}
-          <span class="loading loading-ring loading-xs"></span>
-        {:then}
-          <button onclick={
+        <!-- {#await wallet.getPrincipal()} -->
+        <!--   <span class="loading loading-ring loading-xs"></span> -->
+        <!-- {:then} -->
+          <button 
+            class = "select-none"
+            onclick={
             async () => {
                 try {
                   const text = wallet?.principal?.toString() || "None";
@@ -801,9 +821,10 @@ $effect(() => {
                     }
                 }
           >
+            <!-- {auth.principal} -->
             {wallet.principal?.toString()}
           </span>
-        {/await}
+        <!-- {/await} -->
       </p>
       {#if isWalletBarEdit}
         <h3 class="font-bold bg-success">Watched Tokens</h3>
