@@ -20,7 +20,7 @@ export const load: PageLoad = async ({params}) => {
     // if (true || loanRequestReq.ok && loanOffersAllReq.ok) {
     if (true) {
         const loanRequest = loanRequestReq[0];
-        const loanOffers = loanOffersAllReq;
+        const loanOffers = loanOffersAllReq.filter(offer => offer.loan_request_id == params.id);
         return { loanRequest , loanOffers };
     }
 

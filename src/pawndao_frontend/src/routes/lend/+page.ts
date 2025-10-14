@@ -3,11 +3,12 @@ import type { PageLoad } from './$types';
 import { backend } from "$lib/canisters";
 import { HttpAgent } from "@dfinity/agent";
 import type {LoanRequest} from '../../../../declarations/pawndao_backend/pawndao_backend.did';
-
+import {auth} from '$lib/auth.svelte';
 
 async function getLoanRequests() {
   // const loanRequests = await backend.loanRequestsAll();
   const loanRequests = await backend.loanRequestsAll().then((response: LoanRequest[]) => {
+  // TODO loanRequestsGetByUserNot
   // const loanRequests = await backend.loanRequestsGetByUserNot(user_id ).then((response) => {
     return response;
   });
@@ -22,7 +23,8 @@ export const load: PageLoad = async () => {
     await agent.fetchRootKey();
   }
 
-const user_id = (await agent.getPrincipal());
+// const user_id = (await agent.getPrincipal());
+const user_id = auth.principal;
 
   // const loanRequests = await backend.loanRequestsAll().then((response) => {
   //   return response;

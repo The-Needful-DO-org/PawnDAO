@@ -16,6 +16,7 @@
   import { icrc1_balance, icrc1_decimals } from "$lib/icrc_functions";
   import { wallet } from '$lib/components/WalletBar.svelte';
   import LoanOffer from '$lib/components/LoanOffer.svelte';
+    import {auth} from "$lib/auth.svelte";
 
 
 
@@ -167,7 +168,7 @@
     // console.log(collateral_allowance);
     // console.log(collateral_allowance_float);
     // alert(collateral_allowance.allowance);
-    if (loan_asset_allowance_float < loan_offer.loan_amount) {
+    if (loan_asset_allowance_nat < loan_offer.loan_amount) {
       isValid = false;
       validations.push([false, "Lender Allowance Unavailable"]);
     } else {
@@ -186,6 +187,15 @@
     const loanOffers:LoanOffer[] = Array.from(loanOffersAll).filter((offer:LoanOffer) => { return offer.loan_request_id === loan_request.id });
     loan_offers = loanOffers;
   }
+
+  async function refreshLoanOffer(offer_id) {
+    // TODO a backend query for loanoffers by loanrequest id
+    const loanOfferByIdAsync:LoanOffer[] = await backend.loanOfferByIdAsync(offer_id).then((response:LoanOffer[]) => {
+      return response;
+    });
+    loan_offer = loanOfferByIdAsync[0];
+  }
+
 
   // approve ICRC transfer by backend
   async function icrc2_approve(canister_id : string, amount : Number = 42069000000) {
@@ -251,13 +261,13 @@
   // Handler to accept a loan offer via loanOfferAccept
   async function loanOfferAccept(offerId:BigInt) {
     try {
-      await backend.loanOfferAccept(offerId);
+      await auth.actor.loanOfferAccept(offerId);
       alert("Loan offer accepted!");
       // Optionally refresh data or update UI here
     } catch (e) {
       if (e.message.match("InsufficientAllowance")) {
         // TODO calculate amount to approve
-        const icrc2_approve_response = icrc2_approve(loan_request.collateral_canister_id)
+        const icrc2_approve_response = wallet.icrc2_approve(loan_request.collateral_canister_id)
           .catch((error) => {
             alert(error);
             console.error("henlo");
@@ -265,8 +275,8 @@
             throw error;
           })
           .then((response) => {
-            alert(response);
-            alert("HI");
+            // alert(response);
+            // alert("HI");
             loanOfferAccept(offerId);
           });
         // console.log(icrc2_approve_response );
@@ -277,7 +287,7 @@
         alert("Error accepting loan offer: " + e);
       }
     }
-    refreshLoanOffers();
+    refreshLoanOffer(offerId);
   }
 
   // Handler to reject a loan offer via loanOfferReject
@@ -381,7 +391,7 @@
             <div><strong>Amount:</strong> {Number(loan_offer.loan_amount) / 10**Number(wallet?.icrc1_tokens.find((token) => token.canister_id === loan_offer.loan_asset_canister_id.toString())?.decimals) || loan_offer.loan_amount + " nat"}</div>
             <div><strong>Duration:</strong> {loan_offer.duration}</div>
             <div><strong>Interest:</strong> {loan_offer.interest}</div>
-            <button class="btn btn-success mt-3" onclick={() => icrc2_approve(loan_request.collateral_canister_id, 0) }>
+            <button class="btn btn-success mt-3" onclick={() => wallet.icrc2_approve(loan_request.collateral_canister_id, 0) }>
               Debug: Collateral Allowance 0
             </button>
             {#if wallet.principal?.toString() == loan_request.user_id}

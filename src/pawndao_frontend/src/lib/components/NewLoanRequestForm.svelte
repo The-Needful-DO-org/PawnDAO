@@ -7,6 +7,7 @@
   import { wallet } from '$lib/components/WalletBar.svelte';
   // import { Icrc1Tokens } from '$lib/Icrc1Tokens.svelte';
   import { refreshAllICRC1Tokens} from '$lib/Icrc1Tokens.svelte';
+  import {auth} from '$lib/auth.svelte';
 
   let { showLoanRequestForm = $bindable() } = $props();
   let notification = $state("");
@@ -19,6 +20,8 @@
 
   function loanRequestSubmit(event : Event) {
     event.preventDefault();
+    if (!auth) throw "Error: Must login"
+    if (!auth.actor) throw "Error: Actor missing"
     try {
     if (!event.target) throw "Error: Form not found";
     let form = event.currentTarget as HTMLFormElement;
@@ -55,7 +58,8 @@
     const desired_duration = Number(form.desired_duration.value);
     const desired_interest = Number(form.desired_interest.value);
 
-    backend.loanRequestNew(
+
+    auth.actor.loanRequestNew(
         collateral_canister_id,
         collateral_amount_nat,
         desired_asset_canister_ids,

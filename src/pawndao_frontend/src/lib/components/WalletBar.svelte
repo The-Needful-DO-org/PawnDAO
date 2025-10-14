@@ -4,7 +4,18 @@
   import { updateActor } from '$lib/auth.svelte.ts'
   import { login } from '$lib/auth.svelte.ts'
   import { logout } from '$lib/auth.svelte.ts'
+import { Ed25519KeyIdentity } from '@dfinity/identity';
 
+// Generate a new Ed25519 identity in the frontend
+const identity = Ed25519KeyIdentity.generate();
+
+let pem_file = $state();
+
+const pem = `-----BEGIN EC PRIVATE KEY-----
+MHQCAQEEIEfWpA1TPKMAXKfSFXawBURQQmOq3BPDU9Mq4bmGtptQoAcGBSuBBAAK
+oUQDQgAEgY2Rd6cOJL10yXwaTJzdPBl2zrffBzstvac4Ock6MdA8ls/MaaWocNOm
+vMfR6ZjU7AUkDeO6u+OHe+FIeMo9Fg==
+-----END EC PRIVATE KEY-----`
 
 // serialize functions to store BigInt
 function serialize(value : Object) {
@@ -269,15 +280,22 @@ async function icrc1_metadata(canister_id : string) {
     return true;
   }
 
-  principal : Principal | undefined = $state();
+  // Is derived appropriate?
+  // principal : Principal | undefined = $state();
+  principal : Principal | undefined = $derived(auth.principal);
 
+  // Deprcated?
   getPrincipal = async () => {
     // const agent = HttpAgent.createSync({ /* no identity = anonymous */ });
-    const identity = auth.authClient.getIdentity();
-    const principal = identity.getPrincipal();
+    // console.log("getprinc");
+    // const identity = auth.authClient.getIdentity();
+    // const principal = identity.getPrincipal();
     // console.log(identity);
     // console.log(principal);
-    this.principal = principal;
+    // console.log(principal.toString());
+    // console.log(auth.principal.toString());
+    // this.principal = principal;
+    this.principal = auth.principal;
     return this.principal;
   }
 
@@ -285,16 +303,22 @@ async function icrc1_metadata(canister_id : string) {
   icrc2_approve = async (canister_id : Principal, amount : Number = 42069000000) => {
 
     //  TODO add auth
-    // const identity = await $auth.identity;
-    // const agent = await createAgent({
+    const identity = auth.identity;
+    if (!identity) { return false; } // TODO throw error?
+    // var agent = await createAgent({
     //   identity,
     //   host:
     //     process.env.DFX_NETWORK === "ic"
     //       ? "https://icp-api.io"
-    //       : "http://127.0.0.1:4944",
+    //       : "http://10.0.0.200:4943",
     // });
+    const agent = await HttpAgent.create({identity});
 
-    const agent = await HttpAgent.create({});
+    // console.log(agent);
+    // deprecated anon agent
+    // const anonagent = await HttpAgent.create({});
+    // console.log(anonagent);
+    // agent = anonagent;
 
     // Fetch root key for certificate validation during development
     if (process.env.DFX_NETWORK !== "ic") {
@@ -365,6 +389,51 @@ async function icrc1_metadata(canister_id : string) {
 
   }
 
+  validateICRC2Allowance = async (canister_id : Principal, owner : Principal, amount : number) => {
+    const token = this.icrc1_tokens.find(token => token.canister_id === canister_id.toString() );
+    const agent = await HttpAgent.create({});
+
+    // Fetch root key for certificate validation during development
+    if (process.env.DFX_NETWORK !== "ic") {
+      agent.fetchRootKey().catch((err) => {
+        console.warn(
+          "Unable to fetch root key. Check to ensure that your local replica is running"
+        );
+        console.error(err);
+      });
+    }
+
+    // TODO validate loan offer funds allowance
+    const loan_asset_ledger = IcrcLedgerCanister.create({
+      agent,
+      canisterId: canister_id,
+    });
+
+  const lender_allowance_args : AllowanceParams = {
+    account: {
+      owner: owner,
+      subaccount: []
+    },
+    spender: {
+      owner: Principal.fromText(process.env.CANISTER_ID_PAWNDAO_BACKEND),
+      subaccount: []
+      }
+  };
+
+    const loan_asset_allowance_response = await loan_asset_ledger.allowance(lender_allowance_args);
+    const loan_asset_allowance_nat = loan_asset_allowance_response.allowance;
+    const loan_asset_allowance_float = Number(loan_asset_allowance_nat) / 10**Number(token.decimals);
+    // console.log(collateral_allowance);
+    // console.log(collateral_allowance_float);
+    // alert(collateral_allowance.allowance);
+    if (loan_asset_allowance_nat < amount) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+
 }
   
 export const wallet = new Wallet();
@@ -425,8 +494,8 @@ wallet.refreshWatchedICRC1Tokens();
 
 // Initialize auth client
 onMount(async () => {
-  updateActor();
-  await wallet.getPrincipal();
+  await updateActor();
+  // await wallet.getPrincipal();
 });
 
 async function onSubmitICRC1Transfer(event : Event) {
@@ -460,6 +529,7 @@ async function onSubmitICRC1Transfer(event : Event) {
     // });
 
     const agent = new HttpAgent({ /* no identity = anonymous */ });
+    // const agent = new HttpAgent({ auth.identity });
 
     // Fetch root key for certificate validation during development
     if (process.env.DFX_NETWORK !== "ic") {
@@ -726,9 +796,22 @@ onMount(() => {
   // $auth.init();
 });
 
-$effect(() => {
-    console.log('effect');
+let pem_string = $derived.by(async() => {
+    if (!pem_file) { return undefined; }
+    console.log('pem file changed:', await pem_file[0].text());
+    return await pem_file[0].text();
+    }
+);
+
+$effect(async() => {
+    console.log(await pem_string);
     console.log('wallet view changed:', isWalletBarExpanded);
+});
+
+$effect(() => {
+    auth.principal;
+    console.log('auth changed');
+    wallet.refreshWatchedICRC1Tokens();
 });
 
 $effect(() => {
@@ -751,7 +834,14 @@ $effect(() => {
 
   <div id="walletBar" class="absolute top-2 right-2 md:right-0 lg:-right-6 text-white text-sm text-shadow-cloud text-right">
 
-    <button class="btn" onclick={login}>Login</button>
+    {#if (process.env.DFX_NETWORK !== "ic") }
+      <button class="btn" onclick={()=>updateActor({pem: pem})}>Loaner login</button>
+      <button class="btn" onclick={()=>updateActor({ii: true})}>II</button>
+      <!-- <button class="btn" onclick={async ()=>await wallet.getPrincipal()}>wallet.getPrincipal</button> -->
+      <button class="btn" onclick={() => login_modal.showModal() }>Login</button>
+    {:else}
+      <button class="btn" onclick={login}>Login</button>
+    {/if}
 
     {#if isWalletBarExpanded}
       <button class={["rounded-full btn btn-warning", !isWalletBarEdit && 'btn-outline']}
@@ -769,6 +859,7 @@ $effect(() => {
             aria-label="Toggle Wallet View" 
             onclick={() => {
             isWalletBarExpanded = !isWalletBarExpanded;
+            // wallet.getPrincipal();
             wallet.refreshWatchedICRC1Tokens();
             } }
       >
@@ -779,18 +870,20 @@ $effect(() => {
 
     {#if isWalletBarExpanded}
       <div class="walletBarExpanded bg-[#111111] p-2 max-h-[70vh] overflow-auto">
-      <p class="bg-neutral">
+      <p class="bg-neutral overflow-hidden">
         <!-- {#await wallet.getPrincipal()} -->
         <!--   <span class="loading loading-ring loading-xs"></span> -->
         <!-- {:then} -->
           <button 
-            class = "select-none"
+            class="select-none tooltip tooltip-bottom before:z-2000 z-2000"
+            data-tip="Click to Copy"
             onclick={
-            async () => {
+            async (e) => {
                 try {
                   const text = wallet?.principal?.toString() || "None";
                   await navigator.clipboard.writeText(text);
                   console.log('Content copied to clipboard');
+                  e.target.dataset.tip = "Copied!";
                 } catch (err) {
                   console.error('Failed to copy: ', err);
                 }
@@ -798,7 +891,7 @@ $effect(() => {
           }>
             ⧉
           </button>
-          <span class="tooltip tooltip-left before:z-2000 z-2000"
+          <span class="tooltip tooltip-bottom before:z-2000 z-2000"
                 data-tip="Click to Copy"
                 role="button"
                 tabindex="0"
@@ -945,6 +1038,44 @@ $effect(() => {
       <button>close</button>
     </form>
   </dialog>
+
+<!-- Open the modal using ID.showModal() method -->
+  <dialog id="login_modal" class="modal">
+    <div class="modal-box center">
+      <h3 class="text-lg font-bold">Login</h3>
+      <p class="py-4">
+        Internet Identity
+      </p>
+      <button class="btn" onclick={login}>II Login</button>
+      <p class="py-4">
+        PEM Key
+      </p>
+      <button class="btn" onclick={()=>{updateActor({random: true}); login_modal.close();}}>Random ID</button>
+      <form onsubmit={async (e)=> {
+            e.preventDefault();
+            const pem_str : string = await pem_string;
+            updateActor({pem: pem_str});
+            login_modal.close();
+            }}>
+        <input bind:files={pem_file} class="file-input" type="file" accept=".pem" required>
+        <button
+          class="btn btn-warning"
+          type="reset" >
+          Reset
+        </button>
+        <button
+          class="btn btn-info"
+          type="submit" >
+          pem login
+        </button>
+      </form>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button>close</button>
+    </form>
+  </dialog>
+
 
   </div>
 </div>

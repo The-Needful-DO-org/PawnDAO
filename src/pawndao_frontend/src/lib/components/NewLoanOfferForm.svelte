@@ -12,6 +12,7 @@
   import { IcrcLedgerCanister } from "@dfinity/ledger-icrc";
   import { goto } from '$app/navigation';
   // import { redirect } from '@sveltejs/kit';
+  import { auth } from "$lib/auth.svelte";
 
   let notification = $state("");
   let desired_assets = $state([]);
@@ -71,7 +72,7 @@
     const duration = Number(form.offer_duration.value);
     const interest = Number(form.offer_interest.value);
     try {
-      const offer = await backend.loanOfferNew(
+      const offer = await auth.actor.loanOfferNew(
         loan_request_id,
         loan_asset_canister_id,
         loan_amount_nat,

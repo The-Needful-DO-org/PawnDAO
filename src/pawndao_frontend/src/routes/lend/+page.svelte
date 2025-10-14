@@ -3,6 +3,7 @@
   import type { LoanRequest as loanRequest } from '../../../../declarations/pawndao_backend/pawndao_backend.did';
   import type { PageProps } from './$types';
   import LoanRequest from '$lib/components/LoanRequest.svelte';
+  import { auth } from '$lib/auth.svelte';
 	let { data }: PageProps = $props();
   let current_user_id = $state(data.current_user_id);
 </script>
@@ -14,7 +15,7 @@
   loading...
   {:then loanRequests : loanRequest[]}
     <!-- TODO backend filter -->
-  {#each loanRequests.filter(loanRequest => loanRequest.user_id.toString() != current_user_id.toString()) as loanRequest}
+  {#each loanRequests.filter(loanRequest => loanRequest.user_id.toString() != auth.principal?.toString()) as loanRequest}
 
     <a href="/loan-requests/{loanRequest.id}">
       <LoanRequest loan_request={loanRequest} />

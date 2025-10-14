@@ -3,6 +3,7 @@ import type { PageLoad } from './$types';
 import { backend } from "$lib/canisters";
 import { HttpAgent } from "@dfinity/agent";
 import type {LoanRequest} from '../../../../declarations/pawndao_backend/pawndao_backend.did';
+import {auth} from '$lib/auth.svelte';
 
 export const load: PageLoad = async ({depends}) => {
   depends('app:loanrequests');
@@ -12,7 +13,8 @@ export const load: PageLoad = async ({depends}) => {
     await agent.fetchRootKey();
   }
 
-  const user_id = (await agent.getPrincipal());
+  // const user_id = (await agent.getPrincipal());
+  const user_id = auth.principal;
   // const response = await fetch('https://jsonplaceholder.typicode.com/posts');
   // const loanRequests = await backend.loanRequestsAll().then((response) => {
   const loanRequests = await backend.loanRequestsGetByUser(user_id ).then((response: LoanRequest[]) => {
