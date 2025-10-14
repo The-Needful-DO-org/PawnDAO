@@ -43,57 +43,65 @@
 
 
 </script>
-    <div class="card">
+    <div class="card bg-neutral">
       <div class="card-body">
         <span>Loan: </span>
         <a href="/loans/{loan.id}">
         <span>#{loan.id}</span>
         </a>
 
-        <div><strong>Status:</strong> {Object.entries(loan.status)[0][0]}</div>
+        <div class="grid grid-cols-3 gap-2 wrap-anywhere text-primary-content/70">
 
-        <span>Borrower User: </span>
-        <span>{loan.borrower_user_id}</span>
+          <div><strong>Status:</strong> {Object.entries(loan.status)[0][0]}</div>
 
-        <span>Lender User: </span>
-        <span>{loan.lender_user_id}</span>
+          <div>
+            <span>Borrower User: </span>
+            <span>{loan.borrower_user_id}</span>
+          </div>
 
-        <div class="divider"></div>
+          <div>
+            <span>Lender User: </span>
+            <span>{loan.lender_user_id}</span>
+          </div>
 
-        <span>Collateral: </span>
-        <span>{loan.collateral_canister_id}</span>
-        <span>{loan.collateral_amount}</span>
+          <div>
+            <span>Collateral: </span>
+            <span>{loan.collateral_canister_id}</span>
+            <span>{loan.collateral_amount}</span>
+          </div>
 
-        <div class="divider"></div>
+          <div>
+            <span>Loaned: </span>
+            <span>{loan.loan_asset_canister_id}</span>
+            <span>{loan.loan_amount}</span>
+          </div>
 
-        <span>Loaned: </span>
-        <span>{loan.loan_asset_canister_id}</span>
-        <span>{loan.loan_amount}</span>
+          <div>
+            <span>Interest: </span>
+            <span>{loan.interest} %</span>
+          </div>
 
-        <div class="divider"></div>
+          <div>
+            <span>Repay Amount: </span>
+            <span>{Number(loan.loan_amount) * (1 + Number(loan.interest)/100)} {loan.loan_asset_symbol || loan.loan_asset_canister_id}</span>
+          </div>
 
-        <span>Interest: </span>
-        <span>{loan.interest} %</span>
+          <div>
+            <span>Duration: </span>
+            <span>{loan.duration} Days</span>
+          </div>
 
-        <div class="divider"></div>
+          <div>
+            <span>Started: </span>
+            <span>{loan.timestamp} TODO friendly timestamp</span>
+          </div>
 
-        <span>Repay Amount: </span>
-        <span>{Number(loan.loan_amount) * (1 + Number(loan.interest)/100)} {loan.loan_asset_symbol || loan.loan_asset_canister_id}</span>
+          <div>
+            <span>Time Remaining: </span>
+            <span>TODO calculate time remaining</span>
+          </div>
 
-        <div class="divider"></div>
-
-        <span>Duration: </span>
-        <span>{loan.duration} Days</span>
-
-        <div class="divider"></div>
-
-        <span>Started: </span>
-        <span>{loan.timestamp} TODO friendly timestamp</span>
-
-        <div class="divider"></div>
- 
-        <span>Time Remaining: </span>
-        <span>TODO calculate time remaining</span>
+        </div>
 
         <div class="divider"></div>
 

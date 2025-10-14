@@ -18,9 +18,16 @@
 </script>
 
 <main>
+  <div class="container mx-auto">
   <h1>Loans</h1>
-  <!-- <h2>Loan Requests</h2> -->
-  {#each loans as loan}
+  <h2>Active</h2>
+  {#each loans.filter(loan => Object.entries(loan.status)[0][0] === "Active") as loan}
     <Loan {loan} />
   {/each}
+
+  <h2>Ended</h2>
+  {#each loans.filter(loan => Object.entries(loan.status)[0][0] != "Active") as loan}
+    <Loan {loan} />
+  {/each}
+  </div>
 </main>
