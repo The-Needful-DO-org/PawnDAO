@@ -16,7 +16,7 @@
   import { icrc1_balance, icrc1_decimals } from "$lib/icrc_functions";
   import { wallet } from '$lib/components/WalletBar.svelte';
   import LoanOffer from '$lib/components/LoanOffer.svelte';
-    import {auth} from "$lib/auth.svelte";
+  import {auth} from "$lib/auth.svelte";
 
 
 
@@ -26,6 +26,10 @@
   // let collateral_token_ledger =
   let collateral_decimals = $state();
   let validate_funds_function = $state(validateLoanOfferFunds(loan_offer));
+
+  wallet.addICRC1Token(loan_offer.loan_asset_canister_id);
+  let loan_asset_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === loan_offer.loan_asset_canister_id.toString()));
+  let allowance_bool_lender = $derived(wallet.validateICRC2Allowance(loan_offer.loan_asset_canister_id, wallet.principal, loan_offer.loan_amount))
 
   onMount(async () => {
     const agent = await HttpAgent.create({});
@@ -189,11 +193,10 @@
   }
 
   async function refreshLoanOffer(offer_id) {
-    // TODO a backend query for loanoffers by loanrequest id
     const loanOfferByIdAsync:LoanOffer[] = await backend.loanOfferByIdAsync(offer_id).then((response:LoanOffer[]) => {
       return response;
     });
-    loan_offer = loanOfferByIdAsync[0];
+    loan_offer = loanOfferByIdAsync;
   }
 
 
@@ -286,8 +289,9 @@
       } else {
         alert("Error accepting loan offer: " + e);
       }
+    } finally {
+      refreshLoanOffer(offerId);
     }
-    refreshLoanOffer(offerId);
   }
 
   // Handler to reject a loan offer via loanOfferReject
@@ -296,10 +300,10 @@
       let modified_loan_offer = await backend.loanOfferReject(offerId);
       alert("Loan offer rejected!");
       // Optionally refresh data or update UI here
-      console.log(modified_loan_offer);
-      refreshLoanOffers();
     } catch (e) {
       alert("Error rejecting loan offer: " + e);
+    } finally {
+      refreshLoanOffer(offerId);
     }
   }
 
@@ -318,25 +322,27 @@
   // Handler to withdraw collateral from a loan offer
   async function loanOfferCollateralWithdraw(offerId:BigInt) {
     try {
-      await backend.loanOfferCollateralWithdraw(offerId);
+      await auth.actor.loanOfferCollateralWithdraw(offerId);
       alert("Loan offer collateral withdrawn!");
       // Optionally refresh data or update UI here
     } catch (e) {
       alert("Error withdrawing collateral from loan offer: " + e);
+    } finally {
+      refreshLoanOffer(offerId);
     }
-    refreshLoanOffers();
   }
 
   // Handler to fund the loan offer
   async function loanOfferFundLoan(offerId:BigInt) {
     try {
-      await backend.loanOfferFundLoan(offerId);
+      await auth.actor.loanOfferFundLoan(offerId);
       alert("Loan offer funded Loan created!");
       // Optionally refresh data or update UI here
     } catch (e) {
       alert("Error funding loan offer: " + e);
+    } finally {
+      refreshLoanOffer(offerId);
     }
-    refreshLoanOffers();
   }
 </script>
 <div>
@@ -391,29 +397,88 @@
             <div><strong>Amount:</strong> {Number(loan_offer.loan_amount) / 10**Number(wallet?.icrc1_tokens.find((token) => token.canister_id === loan_offer.loan_asset_canister_id.toString())?.decimals) || loan_offer.loan_amount + " nat"}</div>
             <div><strong>Duration:</strong> {loan_offer.duration}</div>
             <div><strong>Interest:</strong> {loan_offer.interest}</div>
+
+            <!-- Debug controls -->
             <button class="btn btn-success mt-3" onclick={() => wallet.icrc2_approve(loan_request.collateral_canister_id, 0) }>
               Debug: Collateral Allowance 0
             </button>
+
+            <!-- Borrower controls -->
             {#if wallet.principal?.toString() == loan_request.user_id}
-              <button class="btn btn-success mt-3" onclick={() => loanOfferAccept(loan_offer.id)}>
-                Accept Offer
-              </button>
-              <button class="btn btn-error mt-3" onclick={() => loanOfferReject(loan_offer.id)}>
-                Reject Offer
-              </button>
+              {#if Object.entries(loan_offer.status)[0][0] === "Pending" } 
+                <button class="btn btn-success mt-3" onclick={() => loanOfferAccept(loan_offer.id)}>
+                  Accept Offer
+                </button>
+                <button class="btn btn-error mt-3" onclick={() => loanOfferReject(loan_offer.id)}>
+                  Reject Offer
+                </button>
+              {/if}
               <!-- TODO validate withdraw collateral -->
-              <button class="btn btn-warning mt-3" onclick={() => loanOfferCollateralWithdraw(loan_offer.id)}>
-                Withdraw Collateral
-              </button>
+              {#if Object.entries(loan_offer.status)[0][0] === "Collateralized" } 
+                <button class="btn btn-warning mt-3" onclick={() => loanOfferCollateralWithdraw(loan_offer.id)}>
+                  Withdraw Collateral
+                </button>
+              {/if}
             {/if}
+
+            <!-- Lender controls -->
+
+          <!-- validate allowance -->
+            {#if loan_offer.user_id.toString() === auth?.principal?.toString() }
+                {#await allowance_bool_lender }
+                  <span class="loading loading-ring loading-xs"></span>
+                  validating allowance...
+                {:then istokenallowed}
+                  <span class={"align-[0.05em] status status-" + (istokenallowed ? "success" : "warning") }></span>
+                  {loan_asset_token?.symbol || loan_offer.loan_asset_canister_id}
+                  allowance
+                  {#if !istokenallowed}
+                    <br>
+                    <button 
+                      type="button"
+                      onclick={async (e) => {
+                        e.target.disabled = true;
+                        console.log(e);
+                        // todo dynamic amount
+                        const supply = await wallet.icrc1_total_supply(loan_asset_token.canister_id);
+                        await wallet.icrc2_approve(loan_asset_token.canister_id, supply )
+                        // refresh allowance validation
+                        allowance_bool_lender = wallet.validateICRC2Allowance(loan_offer.loan_asset_canister_id, wallet.principal, loan_offer.loan_amount);
+                        // loan_asset_token = loan_asset_token;
+                        wallet.refreshwatchedicrc1tokens();
+                      } }
+                      class="btn btn-info"
+                    >approve</button>
+                  <span>cost: </span>
+                  <span>{loan_asset_token?.fee / 10**loan_asset_token?.decimals}  {loan_asset_token?.symbol}</span>
+                  {/if}
+
+              {:catch error}
+                <button onclick={()=> allowance_bool_lender = wallet.validateICRC2Allowance(loan_offer.loan_asset_canister_id, wallet.principal, loan_offer.loan_amount) }>🔄 Try Again</button>
+                <div class="collapse bg-base-100 border-base-300 border">
+                  <input type="checkbox" />
+                  <div class="collapse-title font-semibold">Error validating allowance</div>
+                  <div class="collapse-content text-sm">
+                    {error}
+                  </div>
+                </div>
+              {/await}
+            {:else}
+              {#await wallet.getPrincipal()}{/await}
+            {/if}
+
+
             {#if wallet.principal?.toString() == loan_offer.user_id}
-              <!-- TODO validate fund loan button -->
-              <button class="btn btn-info mt-3" onclick={() => loanOfferFundLoan(loan_offer.id)}>
-                Fund Loan
-              </button>
-              <button class="btn btn-error mt-3" onclick={() => loanOfferCancel(loan_offer.id)}>
-                Cancel Offer
-              </button>
+              {#if Object.entries(loan_offer.status)[0][0] === "Collateralized" } 
+                <button class="btn btn-info mt-3" onclick={() => loanOfferFundLoan(loan_offer.id)}>
+                  Fund Loan
+                </button>
+              {/if}
+              {#if Object.entries(loan_offer.status)[0][0] === "Pending" } 
+                <button class="btn btn-error mt-3" onclick={() => loanOfferCancel(loan_offer.id)}>
+                  Cancel Offer
+                </button>
+              {/if}
             {/if}
       </div>
     </div>

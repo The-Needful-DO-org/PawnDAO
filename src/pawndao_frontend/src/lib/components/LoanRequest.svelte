@@ -22,6 +22,7 @@
   // let loan_offer = $state(data.loanOffer);
   // let collateral_token_ledger =
   let collateral_decimals = $state();
+  let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id == loan_request.collateral_canister_id));
 
   onMount(async () => {
     const agent = await HttpAgent.create({});
@@ -135,6 +136,7 @@
       alert("Loan offer accepted!");
       // Optionally refresh data or update UI here
     } catch (e) {
+      // TODO deprecate because could cause infinite approve loop
       if (e.message.match("InsufficientAllowance")) {
         // TODO calculate amount to approve
         const icrc2_approve_response = icrc2_approve(loan_request.collateral_canister_id)
@@ -210,9 +212,13 @@
   }
 </script>
 
-      <div class="card bg-neutral">
-        <div class="card-body">
+      <div class="card pb-1">
+        <div class="card-body bg-neutral">
           <h2>Loan Request #{loan_request.id}</h2>
+
+          <div>
+            <span>Status:</span> <span class="badge bg-neutral/40">{Object.entries(loan_request.status)[0][0]}</span>
+          </div>
 
           <!-- <div class="flex flex-row flex-wrap"> -->
           <div class="grid grid-cols-3 gap-2 wrap-anywhere text-primary-content/70">
@@ -226,7 +232,8 @@
           <div>
             <span class="text-primary-content/50">
               Collateral </span> <br/>
-          <span>{Number(loan_request.collateral_amount) / 10**Number(collateral_decimals) || loan_request.collateral_amount + "n"} {wallet.icrc1_tokens.find(token => token.canister_id == loan_request.collateral_canister_id)?.symbol}</span>
+          <!-- <span>{Number(loan_request.collateral_amount) / 10**Number(collateral_decimals) || loan_request.collateral_amount + "n"} {wallet.icrc1_tokens.find(token => token.canister_id == loan_request.collateral_canister_id)?.symbol}</span> -->
+          <span>{Number(loan_request.collateral_amount) / 10**Number(collateral_decimals) || loan_request.collateral_amount + "n"} {collateral_token?.symbol}</span>
           </div>
 
           <div>

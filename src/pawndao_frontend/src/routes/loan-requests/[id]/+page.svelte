@@ -336,9 +336,11 @@
       <h1>Loan Request #{data.loanRequest.id}</h1>
     </a>
 
-    <a href="/loan-requests/{data.loanRequest.id}/offers/new">
-      <span class="btn btn-secondary">Make Offer</span>
-    </a>
+    {#if data.loanRequest.user_id.toString() != wallet?.principal?.toString() }
+      <a href="/loan-requests/{data.loanRequest.id}/offers/new">
+        <span class="btn btn-secondary">Make Offer</span>
+      </a>
+    {/if}
     <!-- {console.log(data.loanRequest)} -->
     <!-- {console.log(data.loanOffers)} -->
 
@@ -378,14 +380,20 @@
       <!-- </div> -->
 
       <div>
-        <h2>My Loan Offers</h2>
-        {#each loan_offers.filter((loan_offer:loanOffer) => loan_offer.user_id.toString() == wallet.principal?.toString()) as loan_offer}
-          <LoanOffer loan_request={data.loanRequest} loan_offer={loan_offer} />
-        {/each}
+        {#if data.loanRequest.user_id.toString() != wallet?.principal?.toString() }
+          <h2>My Loan Offers</h2>
+          {#each loan_offers.filter((loan_offer:loanOffer) => loan_offer.user_id.toString() == wallet.principal?.toString()) as loan_offer}
+            <LoanOffer loan_request={data.loanRequest} loan_offer={loan_offer} />
+          {:else}
+            <div class="text-center">- None -</div>
+          {/each}
+        {/if}
 
         <h2>Loan Offers by others</h2>
         {#each loan_offers.filter((loan_offer:loanOffer) => loan_offer.user_id.toString() != wallet.principal?.toString()) as loan_offer}
           <LoanOffer loan_request={data.loanRequest} loan_offer={loan_offer} />
+        {:else}
+          <div class="text-center">- None -</div>
         {/each}
       </div>
   {/if}

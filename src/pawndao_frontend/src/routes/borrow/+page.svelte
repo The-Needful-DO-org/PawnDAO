@@ -59,6 +59,7 @@
           </figure>
           {:else if collateral_token?.canister_id == "llcdy-4qaaa-aaaah-arcua-cai"}
           <figure>
+            <!-- {console.log(collateral_token)} -->
             <img 
               class="max-w-full max-h-96"
               loading = "lazy"
@@ -94,7 +95,10 @@
             </p>
 
             <div>
-              <span>Offers:</span> <span>{allLoanOffers?.filter(offer => offer.loan_request_id == loanRequest.id && Object.entries(offer.status)[0][0] == "Pending").length}</span>
+              <span>Offers:</span> <span>{allLoanOffers?.filter(
+                offer => offer.loan_request_id == loanRequest.id
+                // && Object.entries(offer.status)[0][0] == "Pending"
+                ).length}</span>
             </div>
 
           </div>

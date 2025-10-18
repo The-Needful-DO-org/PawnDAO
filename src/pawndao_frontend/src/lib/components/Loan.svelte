@@ -142,11 +142,17 @@
               {/if}
 
             {:catch error}
-              Error validating allowance
-              {error}
+                <button onclick={()=> allowance_bool = wallet.validateICRC2Allowance(loan.loan_asset_canister_id, wallet.principal, loan.loan_amount) }>🔄 Try Again</button>
+                <div class="collapse bg-base-100 border-base-300 border">
+                  <input type="checkbox" />
+                  <div class="collapse-title font-semibold">Error validating allowance</div>
+                  <div class="collapse-content text-sm">
+                    {error}
+                  </div>
+                </div>
             {/await}
           {:else}
-            {#await wallet.getPrincipal()}{/await}
+            <!-- {#await wallet.getPrincipal()}{/await} -->
           {/if}
 
         <!-- TODO is_repayable -->

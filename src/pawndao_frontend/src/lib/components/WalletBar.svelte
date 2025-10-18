@@ -5,6 +5,8 @@
   import { login } from '$lib/auth.svelte.ts'
   import { logout } from '$lib/auth.svelte.ts'
 import { Ed25519KeyIdentity } from '@dfinity/identity';
+import { invalidate } from '$app/navigation';
+import { invalidateAll } from '$app/navigation';
 
 // Generate a new Ed25519 identity in the frontend
 const identity = Ed25519KeyIdentity.generate();
@@ -191,14 +193,15 @@ async function icrc1_metadata(canister_id : string) {
  
     refreshWatchedICRC1Tokens = () => {
       this.watched_icrc1_tokens.forEach(async (token) => {
-        if (token.metadata === undefined) {
+        // TODO cache and expire token metadata 
+        if (true || token.metadata === undefined) {
           await icrc1_metadata(token.canister_id).then((metadata) => {
             token.metadata = metadata; 
             const map = new Map<string, any>(metadata.map(([k, v]: [string, any]) => [k, valueToJs(v)]));
             token.symbol = map.get("icrc1:symbol");        // Text -> e.g., "XTKN"
             token.decimals = map.get("icrc1:decimals");    // Nat  -> e.g., 8n
             token.fee = map.get("icrc1:fee");              // Nat  -> e.g., 10000n
-            token.logo = map.get("icrc1:logo");              // Nat  -> e.g., 10000n
+            token.logo = map.get("icrc1:logo");
           })
           .catch((error) => {console.error(error); });
         }
@@ -269,12 +272,12 @@ async function icrc1_metadata(canister_id : string) {
   }
 
   addICRC1Token = (canister_id : Principal) => {
-    const token = this.icrc1_tokens.find(obj => obj.canister_id === canister_id);
+    const token = this.icrc1_tokens.find(obj => obj.canister_id === canister_id.toString());
     if (token) {
       return false;
     } else {
       // add token to list
-      this.icrc1_tokens.push({canister_id: canister_id, watched: false});
+      this.icrc1_tokens.push({canister_id: canister_id.toString(), watched: false});
       this.refreshAllICRC1Tokens();
     }
     return true;
@@ -390,6 +393,8 @@ async function icrc1_metadata(canister_id : string) {
   }
 
   validateICRC2Allowance = async (canister_id : Principal, owner : Principal, amount : number) => {
+    // console.log("validating allowance ", canister_id.toString());
+    // this.addICRC1Token(canister_id);
     const token = this.icrc1_tokens.find(token => token.canister_id === canister_id.toString() );
     const agent = await HttpAgent.create({});
 
@@ -835,7 +840,8 @@ $effect(() => {
   <div id="walletBar" class="absolute top-2 right-2 md:right-0 lg:-right-6 text-white text-sm text-shadow-cloud text-right">
 
     {#if (process.env.DFX_NETWORK !== "ic") }
-      <button class="btn" onclick={()=>updateActor({pem: pem})}>Loaner login</button>
+      <!-- TODO figure out proper invalidation tactic -->
+      <button class="btn" onclick={async()=> {await updateActor({pem: pem}); invalidateAll();}}>Loaner login</button>
       <button class="btn" onclick={()=>updateActor({ii: true})}>II</button>
       <!-- <button class="btn" onclick={async ()=>await wallet.getPrincipal()}>wallet.getPrincipal</button> -->
       <button class="btn" onclick={() => login_modal.showModal() }>Login</button>

@@ -4,6 +4,7 @@ import { canisterId } from '../../../declarations/pawndao_backend';
 import { Secp256k1KeyIdentity } from '@dfinity/identity-secp256k1';
 import { Principal } from '@dfinity/principal';
 import { Ed25519KeyIdentity } from '@dfinity/identity';
+import { invalidateAll } from '$app/navigation';
 
 // Generate a new Ed25519 identity in the frontend
 // const identity = Ed25519KeyIdentity.generate();
@@ -86,6 +87,9 @@ const identityProvider =
     //   principal: authClient?._identity?.getPrincipal() || auth.principal
     // };
     // console.log(auth);
+
+    // TODO is this a good invalidation tactic?
+    invalidateAll();
   };
 
   export const login = async () => {
