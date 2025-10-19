@@ -55,7 +55,7 @@ persistent actor PawnDAO {
 
 type LoanRequestStatus = {
   #Pending;
-  #Matched;
+  #Matched : Nat; // LoanOffer id Nat
   #Cancelled;
   // #Banned : Text; // Optionally carry extra data, like a reason
 };
@@ -277,6 +277,12 @@ public type Loan = {
     a.id == b.id
   };
 
+  // to get index of loanoffer list
+  // TODO probably change the stable var user map List to a Map by id
+  func loanRequestEqualById(a: LoanRequest, b: LoanRequest) : Bool {
+    a.id == b.id
+  };
+
   func loanOfferSetStatus(loan_offer: LoanOffer, new_status: LoanOfferStatus) : LoanOffer {
      let modified_loan_offer = { loan_offer with status = new_status };
      let loan_offers = switch (Map.get(userLoanOffers, Principal.compare, loan_offer.user_id)) {
@@ -291,6 +297,24 @@ public type Loan = {
          List.put(loan_offers, loan_offer_index, modified_loan_offer );
          Map.add(userLoanOffers, Principal.compare, loan_offer.user_id, loan_offers);
          return modified_loan_offer;
+       };
+     };
+  };
+
+
+  func loanRequestSetStatus(loan_request: LoanRequest, new_status: LoanRequestStatus) : LoanRequest {
+     let modified_loan_request = { loan_request with status = new_status };
+     let loan_requests = switch (Map.get(userLoanRequests, Principal.compare, loan_request.user_id)) {
+       case (?list) list;
+       case null List.empty<LoanRequest>();
+     };
+     let loan_request_index = List.indexOf<LoanRequest>(loan_requests, loanRequestEqualById, loan_request ); // else throw Error.reject("Loan Request index not found");
+     switch (loan_request_index) {
+       case (null) { return loan_request }; // do nothing
+       case (?loan_request_index) {
+         List.put(loan_requests, loan_request_index, modified_loan_request );
+         Map.add(userLoanRequests, Principal.compare, loan_request.user_id, loan_requests);
+         return modified_loan_request;
        };
      };
   };
@@ -556,6 +580,8 @@ public type Loan = {
        let ?loan_request = loanRequestById(loan_offer.loan_request_id) else throw Error.reject("Loan Request not found");
        // validate caller is loan requester
        if (loan_request.user_id != msg.caller) { throw Error.reject("You are not the loan requester") };
+       // validate loan request status Pending
+       if (loan_request.status != #Pending) { throw Error.reject("Loan Request status is not Pending") };
 
        // Perform the transfer, to capture the tokens.
        // TODO check for balance and allowance?
@@ -575,6 +601,8 @@ public type Loan = {
       // Check that the transfer was successful.
       let collateral_block_height = switch (collateral_transfer_result) {
         case (#Ok(block_height)) {
+            // set status of Loan Request to MatcheD
+            ignore loanRequestSetStatus(loan_request, #Matched(loan_offer.id));
             // set status of Loan Offer to collateralized
             ignore loanOfferSetStatus(loan_offer, #Collateralized);
             block_height;

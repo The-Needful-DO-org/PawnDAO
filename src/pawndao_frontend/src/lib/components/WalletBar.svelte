@@ -194,7 +194,8 @@ async function icrc1_metadata(canister_id : string) {
     refreshWatchedICRC1Tokens = () => {
       this.watched_icrc1_tokens.forEach(async (token) => {
         // TODO cache and expire token metadata 
-        if (true || token.metadata === undefined) {
+        // if (true || token.metadata === undefined) {
+        if (token.metadata === undefined) {
           await icrc1_metadata(token.canister_id).then((metadata) => {
             token.metadata = metadata; 
             const map = new Map<string, any>(metadata.map(([k, v]: [string, any]) => [k, valueToJs(v)]));

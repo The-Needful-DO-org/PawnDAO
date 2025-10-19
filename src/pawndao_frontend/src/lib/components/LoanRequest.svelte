@@ -218,6 +218,9 @@
 
           <div>
             <span>Status:</span> <span class="badge bg-neutral/40">{Object.entries(loan_request.status)[0][0]}</span>
+            {#if Object.entries(loan_request.status)[0][0] == "Matched" }
+              <span>Loan Offer #{Object.entries(loan_request.status)[0][1] }</span>
+            {/if}
           </div>
 
           <!-- <div class="flex flex-row flex-wrap"> -->
