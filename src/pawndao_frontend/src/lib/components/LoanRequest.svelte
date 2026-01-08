@@ -23,6 +23,7 @@
   // let collateral_token_ledger =
   let collateral_decimals = $state();
   let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id == loan_request.collateral_canister_id));
+  let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id == loan_request.desired_asset_canister_ids[0]));
 
   onMount(async () => {
     const agent = await HttpAgent.create({});
@@ -212,12 +213,58 @@
   }
 </script>
 
-      <div class="card pb-1">
-        <div class="card-body bg-neutral">
+      <div class="card h-full card-border border-secondary/20 bg-base-200 image-full shadow-sm">
+        <!-- Desired asset logo -->
+        {#if desired_token}
+          <!-- <figure -->
+          <!--   class="max-w-full max-h-2/5 absolute -->
+          <!--   top-5/6 left-1/2 transform -translate-x-1/2 -translate-y-5/6" -->
+          <!-- > -->
+          <figure>
+          <img 
+            class="max-w-full max-h-1/2 bottom-0 absolute"
+            loading = "lazy"
+            src={desired_token?.logo || (desired_token.canister_id == "ryjl3-tyaaa-aaaaa-aaaba-cai" ? "/icrc1_logos/ryjl3-tyaaa-aaaaa-aaaba-cai.ico" : null) }
+            alt="{desired_token?.symbol} ICRC1 Logo" />
+          </figure>
+        {/if}
+          <!-- TODO scalable asset logo handler -->
+          {#if collateral_token?.canister_id == "ryjl3-tyaaa-aaaaa-aaaba-cai"}
+            <figure>
+            <img 
+              class="max-w-1/2 max-h-1/2 top-0 absolute"
+              loading = "lazy"
+              src="/icrc1_logos/ryjl3-tyaaa-aaaaa-aaaba-cai.ico"
+              alt="{collateral_token?.symbol} ICRC1 Logo" />
+          </figure>
+          {:else if collateral_token?.canister_id == "llcdy-4qaaa-aaaah-arcua-cai"}
+          <figure>
+            <!-- {console.log(collateral_token)} -->
+            <img 
+              class="max-w-full max-h-1/2 top-0 absolute"
+              loading = "lazy"
+              src={collateral_token.logo || "/icrc1_logos/llcdy-4qaaa-aaaah-arcua-cai.svg"}
+              alt="{collateral_token.symbol} ICRC1 Logo" />
+          </figure>
+          {:else if collateral_token?.logo}
+          <figure>
+            <!-- TODO broken logo handler -->
+            <img 
+              class="max-w-1/2 max-h-1/2 top-0 absolute"
+              loading = "lazy"
+              src={collateral_token.logo}
+              alt="{collateral_token.symbol} ICRC1 Logo" />
+          </figure>
+          {/if}
+
+        <div class="card-body">
           <h2>Loan Request #{loan_request.id}</h2>
 
           <div>
-            <span>Status:</span> <span class="badge bg-neutral/40">{Object.entries(loan_request.status)[0][0]}</span>
+            <span>Status:</span> <span class={["badge bg-neutral/40",
+                                       Object.entries(loan_request.status)[0][0] == "Pending" ? "bg-success/40" : "",
+                                       Object.entries(loan_request.status)[0][0] == "Cancelled" ? "bg-error/40" : "",
+                                       Object.entries(loan_request.status)[0][0] == "Matched" ? "bg-warning/40" : ""]}>{Object.entries(loan_request.status)[0][0]}</span>
             {#if Object.entries(loan_request.status)[0][0] == "Matched" }
               <span>Loan Offer #{Object.entries(loan_request.status)[0][1] }</span>
             {/if}
@@ -245,7 +292,7 @@
           <span>{loan_request.collateral_canister_id}</span>
           </div>
 
-          <div class="col-span-full bg-base-100 outline-base-200 outline-1 text-center">
+          <div class="col-span-full bg-neutral/60 outline-base-200 outline-1 text-center">
             <h2 class="">Desired Terms</h2>
           </div>
 

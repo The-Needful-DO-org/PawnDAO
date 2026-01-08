@@ -17,6 +17,7 @@
     <!-- TODO backend filter -->
   {#each loanRequests.filter(loanRequest => loanRequest.user_id.toString() != auth.principal?.toString()) as loanRequest}
 
+    <div class="mb-2">
     <a href="/loan-requests/{loanRequest.id}">
       <LoanRequest loan_request={loanRequest} />
     <!-- <div class="card"> -->
@@ -32,6 +33,7 @@
     <!---->
     <!-- </div> -->
     </a>
+    </div>
   {/each}
   {/await}
 </main>

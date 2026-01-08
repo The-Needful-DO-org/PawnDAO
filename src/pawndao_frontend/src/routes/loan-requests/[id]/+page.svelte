@@ -336,7 +336,9 @@
       <h1>Loan Request #{data.loanRequest.id}</h1>
     </a>
 
-    {#if data.loanRequest.user_id.toString() != wallet?.principal?.toString() }
+    <!-- if can make offer -->
+    {#if data.loanRequest.user_id.toString() != wallet?.principal?.toString()
+      && Object.entries(data.loanRequest.status)[0][0] == "Pending" }
       <a href="/loan-requests/{data.loanRequest.id}/offers/new">
         <span class="btn btn-secondary">Make Offer</span>
       </a>
