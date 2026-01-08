@@ -14,17 +14,30 @@
   import { backend } from "$lib/canisters";
   import {onMount} from 'svelte';
 
+  // import { browser } from '$app/environment';
+
   // Initialize auth client
   onMount(() => {
     updateActor();
+    // TODO is browser filter useful? maybe for testing env?
+    // if (browser) {
+    //    // do that
+    //   updateActor();
+    // } else {
+    //   // do this
+    // }
   });
 
   let greeting = $state("");
+  // let name = $state("");
 
   function onSubmit(event) {
-    const name = event.target.name.value;
+    const name = event.target.elements.name.value;
     backend.greet(name).then((response) => {
       greeting = response;
+    }).catch((error) => {
+      console.log(error);
+      greeting = error;
     });
     return false;
   }
@@ -67,6 +80,7 @@
   <form action="#" onsubmit={preventDefault(onSubmit)}>
     <label for="name">Enter your name: &nbsp;</label>
     <input id="name" alt="Name" type="text" />
+    <!-- <input bind:value={name} id="name" alt="Name" type="text" /> -->
     <button type="submit">Click Me!</button>
   </form>
   <section id="greeting">{greeting}</section>
