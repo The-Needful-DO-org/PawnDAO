@@ -1,4 +1,5 @@
 <script lang="ts" module>
+  import { untrack } from 'svelte';
   import { auth } from '$lib/auth.svelte.ts'
   import { whoami } from '$lib/auth.svelte.ts'
   import { updateActor } from '$lib/auth.svelte.ts'
@@ -192,6 +193,7 @@ async function icrc1_metadata(canister_id : string) {
     watched_icrc1_tokens = $derived(this.icrc1_tokens.filter(token => token.watched));
  
     refreshWatchedICRC1Tokens = () => {
+      // console.log("refreshWatchedICRC1Tokens()");
       this.watched_icrc1_tokens.forEach(async (token) => {
         // TODO cache and expire token metadata 
         // if (true || token.metadata === undefined) {
@@ -206,6 +208,7 @@ async function icrc1_metadata(canister_id : string) {
           })
           .catch((error) => {console.error(error); });
         }
+        // console.log(token);
         // console.log(token.decimals);
         // console.log(token.canister_id);
         // console.log(token.metadata);
@@ -817,14 +820,18 @@ $effect(async() => {
 $effect(() => {
     auth.principal;
     console.log('auth changed');
+  untrack(() => {
     wallet.refreshWatchedICRC1Tokens();
+  });
 });
 
 $effect(() => {
     console.log('effect');
     console.log('watched tokens changed:');
     wallet.watched_icrc1_tokens;
-    wallet.refreshWatchedICRC1Tokens();
+    untrack(() => {
+      wallet.refreshWatchedICRC1Tokens();
+    });
     // if (wallet.watched_icrc1_tokens) {
       // console.log('watched tokens changed:', wallet.watched_icrc1_tokens);
     // }
