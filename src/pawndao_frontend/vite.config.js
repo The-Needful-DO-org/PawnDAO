@@ -36,6 +36,9 @@ export default defineConfig({
       },
     },
   },
+  test: {
+    environment: 'jsdom',
+  },
   plugins: [
     sveltekit(),
     tailwindcss(),
@@ -43,6 +46,10 @@ export default defineConfig({
     environment("all", { prefix: "DFX_" }),
   ],
   resolve: {
+    conditions: process.env.VITEST
+		?
+				 ['browser']
+		: undefined,
     alias: [
       {
         find: "declarations",

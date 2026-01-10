@@ -6,6 +6,7 @@
   "scripts": {
     "setup": "npm i && dfx canister create pawndao_backend && dfx generate pawndao_backend && dfx deploy",
     "start": "vite --port 3003 --host",
+    "test": "vitest run",
     "prebuild": "dfx generate",
     "build": "vite build",
     "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\""
@@ -24,13 +25,19 @@
     "@sveltejs/adapter-static": "^3.0.4",
     "@sveltejs/kit": "^2.5.27",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/svelte": "^5.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.5.2",
     "dotenv": "^16.3.1",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^27.4.0",
     "sass": "^1.63.6",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.1",
     "typescript": "^5.6.2",
     "vite": "^5.4.4",
-    "vite-plugin-environment": "^1.1.3"
+    "vite-plugin-environment": "^1.1.3",
+    "vitest": "^4.0.16"
   }
 }

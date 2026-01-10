@@ -14,18 +14,17 @@
   import { backend } from "$lib/canisters";
   import {onMount} from 'svelte';
 
-  // import { browser } from '$app/environment';
+  import { browser } from '$app/environment';
 
   // Initialize auth client
   onMount(() => {
-    updateActor();
-    // TODO is browser filter useful? maybe for testing env?
-    // if (browser) {
-    //    // do that
-    //   updateActor();
-    // } else {
-    //   // do this
-    // }
+    // browser filter for testing env
+    if (browser && process.env.NODE_ENV != "test") {
+       // do that
+      updateActor();
+    } else {
+      // do this
+    }
   });
 
   let greeting = $state("");
