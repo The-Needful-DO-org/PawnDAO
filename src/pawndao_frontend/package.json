@@ -6,10 +6,12 @@
   "scripts": {
     "setup": "npm i && dfx canister create pawndao_backend && dfx generate pawndao_backend && dfx deploy",
     "start": "vite --port 3003 --host",
-    "test": "vitest run",
+    "preview": "vite preview",
+    "test": "vitest run && npm run test:e2e",
     "prebuild": "dfx generate",
     "build": "vite build",
-    "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\""
+    "format": "prettier --write \"src/**/*.{json,js,jsx,ts,tsx,css,scss}\"",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@dfinity/agent": "^3.0.0",
@@ -22,16 +24,20 @@
     "@dfinity/utils": "^3.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@sveltejs/adapter-static": "^3.0.4",
     "@sveltejs/kit": "^2.5.27",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/svelte": "^5.3.1",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^24.5.2",
+    "@types/node": "^22",
+    "@vitest/browser-playwright": "^4.0.16",
+    "@vitest/coverage-v8": "^4.0.16",
     "dotenv": "^16.3.1",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^27.4.0",
+    "playwright": "^1.57.0",
     "sass": "^1.63.6",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.1",
