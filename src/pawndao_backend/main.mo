@@ -830,6 +830,9 @@ public type Loan = {
     let endtime = loan.timestamp + loan.duration * oneDay;
     if (Time.now() < endtime) { throw Error.reject("Loan time not expired"); };
 
+    // app fee 5% of collateral
+    let app_fee_amount_nat : Nat = loan.collateral_amount * 5 / 100;
+
      // transfer the collateral to the lender
     let collateral_token : ICRC.Actor = actor (Principal.toText(loan.collateral_canister_id));
     let collateral_token_fee = await collateral_token.icrc1_fee();
@@ -837,7 +840,7 @@ public type Loan = {
           spender_subaccount = null;
           from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
           to = { owner = loan.lender_user_id; subaccount = null };
-          amount = loan.collateral_amount - collateral_token_fee;
+          amount = loan.collateral_amount - collateral_token_fee - app_fee_amount_nat;
           fee = null;
           memo = null;
           created_at_time = null;
@@ -848,6 +851,7 @@ public type Loan = {
    // Check that the transfer was successful.
    let loan_default_transfer_block_height = switch (loan_default_collateral_transfer_result) {
      case (#Ok(block_height)) {
+         // TODO log the app fee revenue
          block_height;
        };
      case (#Err(err)) {
