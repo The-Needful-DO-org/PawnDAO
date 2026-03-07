@@ -169,6 +169,7 @@
               {/if}
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="kylwo-viaaa-aaaaq-aae7a-cai" aria-label="TENDY" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
