@@ -168,20 +168,20 @@
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" required />
               {/if}
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="kylwo-viaaa-aaaaq-aae7a-cai" aria-label="TENDY" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
             </div>
           </div>
 
@@ -320,19 +320,20 @@
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" />
               {/if}
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" />
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" />
-              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="kylwo-viaaa-aaaaq-aae7a-cai" aria-label="TENDY" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" />
               <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" />
+              <input bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" />
             </div>
           </div>
 
