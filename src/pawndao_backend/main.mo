@@ -711,25 +711,35 @@ public type Loan = {
     let endtime = loan.timestamp + loan.duration * oneDay;
     if (Time.now() >= endtime) { throw Error.reject("Loan time expired"); };
 
+    // app fee 5% of interest
+    let app_fee_amount_float = (Float.fromInt(Nat.toInt(loan.loan_amount)) * (loan.interest / 100.0 * 0.05));
+    let app_fee_amount_nat : Nat = Int.abs(Float.toInt(app_fee_amount_float));
+
+    // TODO add transaction fees?
     let amount_to_repay_float = (Float.fromInt(Nat.toInt(loan.loan_amount)) * (1.0 + loan.interest / 100.0));
     // let amount_to_repay = (1000000000 * (1.0 + 1.1 / 100.0));
     let amount_to_repay_nat : Nat = Int.abs(Float.toInt(amount_to_repay_float));
     Debug.print(debug_show(amount_to_repay_nat));
 
+    // TODO use subaccount or library to avoid comingling funds?
+    // 1. send amount_to_repay_nat to Backend
+    // 2. send amount_to_repay_nat - app_fee_amount_nat to Lender
     let token : ICRC.Actor = actor (Principal.toText(loan.loan_asset_canister_id));
-    let loan_repay_transfer_result = await token.icrc2_transfer_from({
+    let token_fee_nat = await token.icrc1_fee();
+
+    let loan_repay_backend_transfer_result = await token.icrc2_transfer_from({
           spender_subaccount = null;
           from = { owner = msg.caller; subaccount = null};
-          to = { owner = loan.lender_user_id; subaccount = null };
-          amount = amount_to_repay_nat;
+          to = { owner = Principal.fromActor(PawnDAO); subaccount = null};
+          amount = amount_to_repay_nat + token_fee_nat + token_fee_nat;
           fee = null;
           memo = null;
           created_at_time = null;
         });
 
-     // TODO validate loan_repay_transfer_result
+     // TODO validate loan_repay_backend_transfer_result
      // Check that the transfer was successful.
-     let loan_repay_block_height = switch (loan_repay_transfer_result) {
+     let loan_repay_backend_block_height = switch (loan_repay_backend_transfer_result) {
        case (#Ok(block_height)) {
            // set status of Loan Offer to Repaid
            ignore loanSetStatus(loan, #Repaid);
@@ -743,6 +753,38 @@ public type Loan = {
          throw Error.reject("Loan Repay transfer error: " # debug_show(err) );
        };
      };
+
+    // TODO log record of payment
+    // loan_repay_backend_block_height 
+
+    // 2. send amount_to_repay_nat - app_fee_amount_nat to Lender
+    let loan_repay_transfer_result = await token.icrc2_transfer_from({
+          spender_subaccount = null;
+          from = { owner = Principal.fromActor(PawnDAO); subaccount = null};
+          to = { owner = loan.lender_user_id; subaccount = null };
+          amount = (amount_to_repay_nat - app_fee_amount_nat + token_fee_nat) ;
+          fee = null;
+          memo = null;
+          created_at_time = null;
+        });
+
+     // TODO validate loan_repay_transfer_result
+     // Check that the transfer was successful.
+//     let loan_repay_block_height = switch (loan_repay_transfer_result) {
+//       case (#Ok(block_height)) {
+//           // set status of Loan Offer to Repaid
+//           ignore loanSetStatus(loan, #Repaid);
+//           block_height;
+//         };
+//       case (#Err(err)) {
+//         // Transfer failed
+//         // TODO Log the failure
+//         // TODO notify the lender of the problem
+//         // TODO define return type instead of throw Result.Result<Loan, LoanRepayError> {
+//         // return #err(#TransferFromError(err));
+//         throw Error.reject("Loan Repay transfer error: " # debug_show(err) );
+//       };
+//     };
 
     // TODO log record of payment
     // loan_repay_block_height 
