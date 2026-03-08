@@ -173,21 +173,11 @@ async function icrc1_metadata(canister_id : string) {
         // symbol: "LICP",
         watched: true
       },
-      {
-        canister_id: 'nrjl3-tyaaa-aaaaa-aaaba-cai',
-        symbol: "NIL",
-        watched: true
-      },
       // {
       //   canister_id: 'llcdy-4qaaa-aaaah-arcua-cai',
       //   // symbol: "TPAWN",
       //   watched: true
       // },
-      {
-        canister_id: 'ryjl3-tyaaa-aaaaa-aaaba-cai',
-        symbol: "LICP",
-        watched: false
-      },
     ];
     icrc1_tokens : WalletICRC1Token[] = $state(this.default_icrc1_tokens);
 
@@ -252,12 +242,36 @@ async function icrc1_metadata(canister_id : string) {
           .catch((error) => {console.error(error); token.balance = "Error Unavailable"; });
         // token.balance = 42069;
       });
-      localStorage.setItem('icrc1tokens', serialize(this.icrc1_tokens));
+      // localStorage.setItem('icrc1tokens', serialize(this.icrc1_tokens));
     }
    
-  refreshICRC1Token = (canister_id : String) => {
-    alert(`Selected collateral canister id: ${canister_id}`);
-  }
+  refreshICRC1Token = async (canister_id : String) => {
+    const token = this.icrc1_tokens.find(obj => obj.canister_id === canister_id);
+      // TODO cache and expire token metadata 
+      // if (true || token.metadata === undefined) {
+      if (token && token.metadata === undefined) {
+        await icrc1_metadata(token.canister_id).then((metadata) => {
+          token.metadata = metadata; 
+          const map = new Map<string, any>(metadata.map(([k, v]: [string, any]) => [k, valueToJs(v)]));
+          token.symbol = map.get("icrc1:symbol");        // Text -> e.g., "XTKN"
+          token.decimals = map.get("icrc1:decimals");    // Nat  -> e.g., 8n
+          token.fee = map.get("icrc1:fee");              // Nat  -> e.g., 10000n
+          token.logo = map.get("icrc1:logo");
+        })
+        .catch((error) => {console.error(error); });
+        // console.log(token);
+        // console.log(token.decimals);
+        // console.log(token.canister_id);
+        // console.log(token.metadata);
+      icrc_balance(token.canister_id)
+          .then((balance) => {token.balance = Number(balance) / 10**Number(token.decimals); })
+          .catch((error) => {console.error(error); token.balance = "Unavailable"; });
+        // token.balance = 42069;
+      // console.log(`refreshed icrc1 token ${token.canister_id}`);
+      // localStorage.setItem('icrc1tokens', serialize(this.icrc1_tokens));
+    }
+    }
+
 
   icrc1_balance = (canister_id : String) => {
     // TODO 
@@ -283,7 +297,8 @@ async function icrc1_metadata(canister_id : string) {
     } else {
       // add token to list
       this.icrc1_tokens.push({canister_id: canister_id.toString(), watched: false});
-      this.refreshAllICRC1Tokens();
+      // this.refreshAllICRC1Tokens();
+      this.refreshICRC1Token(canister_id.toString());
     }
     return true;
   }
@@ -1012,7 +1027,7 @@ $effect(() => {
                 // alert(walletAddToken.value);
                 // alert(wallet.icrc1_tokens);
                 wallet.icrc1_tokens.push({canister_id: walletAddToken.value, watched: true});
-                wallet.refreshWatchedICRC1Tokens();
+                //wallet.refreshWatchedICRC1Tokens();
                 walletAddToken.value = "";
                 // alert(wallet.icrc1_tokens);
                 // showAddTokenInput = !showAddTokenInput;
