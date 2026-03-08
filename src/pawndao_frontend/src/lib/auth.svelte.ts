@@ -67,7 +67,9 @@ const identityProvider =
     // console.log(authClient);
     // console.log(authClient._identity?._principal?.toString());
     // console.log(actor);
+    // console.log("identity");
     // console.log(identity);
+    // console.log(identity.constructor.name);
     // console.log(identity.getPrincipal().toString());
     // console.log(identity?._principal?.toString());
 
@@ -75,8 +77,14 @@ const identityProvider =
     auth.authClient = authClient
     auth.identity = identity
     auth.isAuthenticated = isAuthenticated
-    // auth.principal = authClient?._identity?.getPrincipal() || auth.principal
-    auth.principal = identity.getPrincipal() || auth.principal
+
+    if (identity.constructor.name == "DelegationIdentity") {
+      // works for II
+      auth.principal =  authClient?._identity?.getPrincipal() || auth.principal
+    } else {
+      // works for pem
+      auth.principal = identity.getPrincipal() || auth.principal
+    }
 
     // Cannot reassign exported state var
     // auth = {

@@ -14,6 +14,7 @@ const identity = Ed25519KeyIdentity.generate();
 
 let pem_file = $state();
 
+// pawn_loaner id for debugging
 const pem = `-----BEGIN EC PRIVATE KEY-----
 MHQCAQEEIEfWpA1TPKMAXKfSFXawBURQQmOq3BPDU9Mq4bmGtptQoAcGBSuBBAAK
 oUQDQgAEgY2Rd6cOJL10yXwaTJzdPBl2zrffBzstvac4Ock6MdA8ls/MaaWocNOm
