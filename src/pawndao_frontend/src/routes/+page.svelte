@@ -44,10 +44,12 @@
 
 <main>
 
-  {auth.principal}
-  <button class="btn" onclick={login}>Login</button>
-  <button class="btn btn-error" onclick={logout}>Logout</button>
-  <button class="btn" onclick={whoami}>whoami</button>
+  {#if (process.env.DFX_NETWORK !== "ic") }
+    {auth.principal}
+    <button class="btn" onclick={login}>Login</button>
+    <button class="btn btn-error" onclick={logout}>Logout</button>
+    <button class="btn" onclick={whoami}>whoami</button>
+  {/if}
 
   <!-- <div class="hero bg-base-200 min-h-screen"> -->
   <div class="hero bg-base-200 min-h-[calc(100vh-65px)]">
