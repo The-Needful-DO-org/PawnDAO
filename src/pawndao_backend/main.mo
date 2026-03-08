@@ -76,8 +76,8 @@ public type LoanRequest = {
 
   // Map from Principal to List of LoanRequests
   // stable let loanRequests = Map.empty<Principal, List.List<Article>>();
-  transient var userLoanRequests = Map.empty<Principal, List.List<LoanRequest>>();
-  transient var nextLoanRequestId = 0;
+  stable var userLoanRequests = Map.empty<Principal, List.List<LoanRequest>>();
+  stable var nextLoanRequestId = 0;
 
   // Add a loan request for the caller
   public shared(msg) func loanRequestNew(collateral_canister_id : Principal,
@@ -165,8 +165,8 @@ public type LoanOffer = {
     status : LoanOfferStatus;
   };
 
-  transient var userLoanOffers = Map.empty<Principal, List.List<LoanOffer>>();
-  transient var nextLoanOfferId = 0;
+  stable var userLoanOffers = Map.empty<Principal, List.List<LoanOffer>>();
+  stable var nextLoanOfferId = 0;
 
 type LoanStatus = {
   #Pending;
@@ -195,8 +195,8 @@ public type Loan = {
     status : LoanStatus;
   };
 
-  transient var idLoansMap = Map.empty<Nat, Loan>();
-  transient var nextLoanId : Nat = 0;
+  stable var idLoansMap = Map.empty<Nat, Loan>();
+  stable var nextLoanId : Nat = 0;
 
   public shared(msg) func loanOfferNew(
     loan_request_id : Nat,
