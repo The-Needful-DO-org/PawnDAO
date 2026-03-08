@@ -146,7 +146,7 @@
       <h1 class="text-center text-2xl sm:text-3xl font-semibold text-secondary">Create Loan Offer</h1>
 
       <h2 class="text-left text-xl sm:text-xl font-semibold text-info">Loan Request Terms: </h2>
-      <form id="LoanRequestForm" class="w-full mt-5 sm:mt-8" onsubmit={loanRequestSubmit}>
+      <form id="LoanRequestForm" class="w-full mt-5 sm:mt-8" >
         <div class="mx-auto w-full sm:max-w-md md:max-w-lg flex flex-col gap-5">
           <!-- Collateral Canister ID Input -->
           <div class="form-control">
