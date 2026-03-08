@@ -26,6 +26,13 @@
   let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id == loan_request.desired_asset_canister_ids[0]));
 
   onMount(async () => {
+    // add assets to wallet so metadata is available
+    // TODO a more efficient solution
+    wallet.addICRC1Token(loan_request.collateral_canister_id);
+    if (loan_request.desired_asset_canister_ids[0]) {
+      wallet.addICRC1Token(loan_request.desired_asset_canister_ids[0]);
+    }
+
     const agent = await HttpAgent.create({});
     // const agent = new HttpAgent({ /* no identity = anonymous */ });
 
