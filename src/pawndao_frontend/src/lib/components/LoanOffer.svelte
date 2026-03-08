@@ -394,9 +394,11 @@
             <div><strong>Lender:</strong> {loan_offer.user_id}</div>
             <div><strong>Borrower:</strong> {loan_request.user_id}</div>
             <div><strong>Asset Canister ID:</strong> {loan_offer.loan_asset_canister_id}</div>
-            <div><strong>Amount:</strong> {Number(loan_offer.loan_amount) / 10**Number(wallet?.icrc1_tokens.find((token) => token.canister_id === loan_offer.loan_asset_canister_id.toString())?.decimals) || loan_offer.loan_amount + " nat"}</div>
-            <div><strong>Duration:</strong> {loan_offer.duration}</div>
-            <div><strong>Interest:</strong> {loan_offer.interest}</div>
+            <div><strong>Amount:</strong> {Number(loan_offer.loan_amount) / 10**Number(wallet?.icrc1_tokens.find((token) => token.canister_id === loan_offer.loan_asset_canister_id.toString())?.decimals) || loan_offer.loan_amount + " nat"}
+              {loan_asset_token?.symbol}
+            </div>
+            <div><strong>Duration:</strong> {loan_offer.duration} Days</div>
+            <div><strong>Interest:</strong> {loan_offer.interest} %</div>
 
             <!-- Debug controls -->
             <button class="btn btn-success mt-3" onclick={() => wallet.icrc2_approve(loan_request.collateral_canister_id, 0) }>
