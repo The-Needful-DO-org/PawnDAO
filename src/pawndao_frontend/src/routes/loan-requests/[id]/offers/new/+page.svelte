@@ -3,6 +3,15 @@
   import type { PageProps } from './$types';
   import NewLoanOfferForm from '$lib/components/NewLoanOfferForm.svelte';
 	let { data }: PageProps = $props();
+  import { wallet } from '$lib/components/WalletBar.svelte';
+    // add assets to wallet so metadata is available
+    // TODO a more efficient solution
+      wallet.addICRC1Token(data.loanRequest.collateral_canister_id);
+      if (data.loanRequest.desired_asset_canister_ids[0]) {
+        wallet.addICRC1Token(data.loanRequest.desired_asset_canister_ids[0]);
+      }
+
+
 </script>
 
 <main>

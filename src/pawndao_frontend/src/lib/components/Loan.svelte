@@ -6,6 +6,9 @@
   let loan_asset_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === loan.loan_asset_canister_id.toString()));
   let allowance_bool = $derived(wallet.validateICRC2Allowance(loan.loan_asset_canister_id, wallet.principal, loan.loan_amount))
 
+  wallet.addICRC1Token(loan.loan_asset_canister_id);
+  wallet.addICRC1Token(loan.collateral_canister_id);
+
   // Handler to accept a loan offer via loanOfferAccept
   async function loanRepay(loan_id:BigInt) {
     // TODO handle allowance
