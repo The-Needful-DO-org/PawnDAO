@@ -139,8 +139,9 @@
     } catch (e) {
       // TODO deprecate because could cause infinite approve loop
       if (e.message.match("InsufficientAllowance")) {
-        // TODO calculate amount to approve
-        const icrc2_approve_response = icrc2_approve(loan_request.collateral_canister_id)
+        // calculate amount to approve
+        const approval_amount = loan_request.collateral_amount * 1000000000000;
+        const icrc2_approve_response = icrc2_approve(loan_request.collateral_canister_id, approval_amount)
           .catch((error) => {
             alert(error);
             console.error("henlo");
