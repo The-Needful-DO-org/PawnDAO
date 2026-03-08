@@ -237,7 +237,7 @@
               src="/icrc1_logos/ryjl3-tyaaa-aaaaa-aaaba-cai.ico"
               alt="{collateral_token?.symbol} ICRC1 Logo" />
           </figure>
-          {:else if collateral_token?.canister_id == "llcdy-4qaaa-aaaah-arcua-cai"}
+          {:else if collateral_token?.canister_id == "XXllcdy-4qaaa-aaaah-arcua-cai"}
           <figure>
             <!-- {console.log(collateral_token)} -->
             <img 
@@ -250,7 +250,7 @@
           <figure>
             <!-- TODO broken logo handler -->
             <img 
-              class="max-w-1/2 max-h-1/2 top-0 absolute"
+              class="max-h-2/5 top-1/24 absolute"
               loading = "lazy"
               src={collateral_token.logo}
               alt="{collateral_token.symbol} ICRC1 Logo" />
