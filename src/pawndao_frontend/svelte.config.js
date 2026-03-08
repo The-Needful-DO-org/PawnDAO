@@ -9,7 +9,8 @@ const config = {
     adapter: adapter({
       pages: 'dist',
       assets: 'dist',
-      fallback: 'app.html',
+      // fallback: undefined,
+			fallback: 'index.html', // may differ from host to host
       precompress: false,
       strict: true,
     }),
