@@ -854,7 +854,11 @@ $effect(() => {
       <!-- <button class="btn" onclick={async ()=>await wallet.getPrincipal()}>wallet.getPrincipal</button> -->
       <button class="btn" onclick={() => login_modal.showModal() }>Login</button>
     {:else}
-      <button class="btn" onclick={login}>Login</button>
+      {#if (auth.isAuthenticated == false)}
+        <button class="btn" onclick={login}>Login</button>
+      {:else}
+        <button class="btn btn-error" onclick={logout}>Logout</button>
+      {/if}
     {/if}
 
     {#if isWalletBarExpanded}
@@ -1060,7 +1064,11 @@ $effect(() => {
       <p class="py-4">
         Internet Identity
       </p>
-      <button class="btn" onclick={login}>II Login</button>
+      {#if (auth.isAuthenticated == false)}
+        <button class="btn" onclick={login}>II Login</button>
+      {:else}
+        <button class="btn btn-error" onclick={logout}>Logout</button>
+      {/if}
       <p class="py-4">
         PEM Key
       </p>
