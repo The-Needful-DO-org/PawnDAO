@@ -258,7 +258,7 @@
           <figure>
             <!-- TODO broken logo handler -->
             <img 
-              class="max-h-2/5 top-1/24 absolute"
+              class="max-h-2/5 top-5 absolute"
               loading = "lazy"
               src={collateral_token.logo}
               alt="{collateral_token.symbol} ICRC1 Logo" />
