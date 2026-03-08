@@ -11,22 +11,23 @@
 	let { children } = $props();
   import Navbar from "$lib/components/Navbar.svelte";
 
-  onMount(() => {
+  let isDebug = false;
 
-  // debugging tool eruda
-    if (process.env.DFX_NETWORK !== "ic") {
-      const script = document.createElement('script');
-      script.onload = () => {
-        if (eruda) {
-          eruda.init();
-        }
-      };
-      script.src = 'https://cdn.jsdelivr.net/npm/eruda';
-      document.head.appendChild(script);
+  onMount(async () => {
+    const url = new URL(window.location.href);
+    isDebug = url.searchParams.get('debug') === 'true';
+    if (isDebug) {
+      console.log('Debug mode: activated');
+      const eruda = (await import('eruda')).default;
+      eruda.init();
     }
-
   });
 
+  onMount(async () => {
+    if (process.env.DFX_NETWORK == "ic") return;
+    const eruda = (await import('eruda')).default;
+    eruda.init();
+  });
 
 
 </script>
@@ -37,7 +38,3 @@
 
 {@render children()}
 
-{#if process.env.DFX_NETWORK !== "ic"}
-  <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-  <script>eruda.init();</script>
-{/if}
