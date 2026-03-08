@@ -400,10 +400,12 @@
             <div><strong>Duration:</strong> {loan_offer.duration} Days</div>
             <div><strong>Interest:</strong> {loan_offer.interest} %</div>
 
-            <!-- Debug controls -->
-            <button class="btn btn-success mt-3" onclick={() => wallet.icrc2_approve(loan_request.collateral_canister_id, 0) }>
-              Debug: Collateral Allowance 0
-            </button>
+            {#if (process.env.DFX_NETWORK !== "ic") }
+              <!-- Debug controls -->
+              <button class="btn btn-success mt-3" onclick={() => wallet.icrc2_approve(loan_request.collateral_canister_id, 0) }>
+                Debug: Collateral Allowance 0
+              </button>
+            {/if}
 
             <!-- Borrower controls -->
             {#if wallet.principal?.toString() == loan_request.user_id}
