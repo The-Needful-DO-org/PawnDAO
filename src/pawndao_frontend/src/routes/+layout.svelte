@@ -1,5 +1,6 @@
 <script lang="ts">
   import "../app.css";
+  import { dev } from '$app/environment';
   // import "../index.scss";
   import WalletBar from "$lib/components/WalletBar.svelte";
 	// // import type { PageProps } from './$types';
@@ -24,7 +25,7 @@
   });
 
   onMount(async () => {
-    if (process.env.DFX_NETWORK == "ic") return;
+    if (!dev)  return ;
     const eruda = (await import('eruda')).default;
     eruda.init();
   });
