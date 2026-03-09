@@ -39,9 +39,6 @@
       "type": "motoko"
     },
     "pawndao_frontend": {
-      "dependencies": [
-        "pawndao_backend"
-      ],
       "source": [
         "src/pawndao_frontend/dist"
       ],
