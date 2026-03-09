@@ -21,13 +21,15 @@
     "@dfinity/ledger-icp": "^6.0.0",
     "@dfinity/ledger-icrc": "^4.0.1",
     "@dfinity/principal": "^3.0.0",
-    "@dfinity/utils": "^3.1.0"
+    "@dfinity/utils": "^3.1.0",
+    "date-fns": "^4.1.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@sveltejs/adapter-static": "^3.0.4",
     "@sveltejs/kit": "^2.5.27",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
+    "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/svelte": "^5.3.1",
     "@testing-library/user-event": "^14.6.1",

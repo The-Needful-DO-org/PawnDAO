@@ -18,7 +18,7 @@
 
 </script>
 
-<main>
+<main class="prose">
   <div class="container mx-auto">
   <h1>My Loans</h1>
   <h2>Active</h2>

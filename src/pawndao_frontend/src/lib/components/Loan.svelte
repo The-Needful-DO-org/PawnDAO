@@ -1,10 +1,22 @@
 <script lang="ts">
   import {auth} from "$lib/auth.svelte";
   import { wallet } from "$lib/components/WalletBar.svelte";
+  import { formatDistanceToNow } from 'date-fns';
 
   let { loan } = $props();
   let loan_asset_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === loan.loan_asset_canister_id.toString()));
+  let collateral_asset_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === loan.collateral_canister_id.toString()));
   let allowance_bool = $derived(wallet.validateICRC2Allowance(loan.loan_asset_canister_id, wallet.principal, loan.loan_amount))
+  let endDate = $derived(new Date(Number(loan.timestamp)/1000000+(86400000*Number(loan.duration))));
+  let repay_amount = $derived.by(() => {
+    let amount = Number(loan.loan_amount) * (1 + Number(loan.interest)/100);
+    if (loan_asset_token) {
+     amount = amount / 10**Number(loan_asset_token.decimals)
+    } else {
+      return `${Math.round(amount)}nat`;
+    }
+    return amount;
+  })
 
   wallet.addICRC1Token(loan.loan_asset_canister_id);
   wallet.addICRC1Token(loan.collateral_canister_id);
@@ -69,14 +81,18 @@
 
           <div>
             <span>Collateral: </span>
+            <!-- <span>{typeof collateral_asset_token?.decimals !== 'undefined' ? Number(loan.collateral_amount)/10**Number(collateral_asset_token?.decimals) : loan.collateral_amount + "nat"}</span> -->
+            <span>{collateral_asset_token?.decimals ? Number(loan.collateral_amount)/10**Number(collateral_asset_token?.decimals) : loan.collateral_amount + "nat"}</span>
+            <span>{collateral_asset_token?.symbol}</span>
             <span>{loan.collateral_canister_id}</span>
-            <span>{loan.collateral_amount}</span>
           </div>
 
           <div>
             <span>Loaned: </span>
+            <span>{loan_asset_token?.decimals ? Number(loan.loan_amount)/10**Number(loan_asset_token?.decimals) : loan.loan_amount + "nat"}</span>
+            <!-- <span>{loan.loan_amount}</span> -->
+            <span>{loan_asset_token?.symbol}</span>
             <span>{loan.loan_asset_canister_id}</span>
-            <span>{loan.loan_amount}</span>
           </div>
 
           <div>
@@ -86,7 +102,7 @@
 
           <div>
             <span>Repay Amount: </span>
-            <span>{Number(loan.loan_amount) * (1 + Number(loan.interest)/100)} {loan.loan_asset_symbol || loan.loan_asset_canister_id}</span>
+            <span>{repay_amount} {loan_asset_token?.symbol || loan.loan_asset_canister_id}</span>
           </div>
 
           <div>
@@ -96,12 +112,18 @@
 
           <div>
             <span>Started: </span>
-            <span>{loan.timestamp} TODO friendly timestamp</span>
+            <span>{new Date(Number(loan.timestamp)/1000000)}</span>
           </div>
 
           <div>
             <span>Time Remaining: </span>
-            <span>TODO calculate time remaining</span>
+            <!-- <span>{endDate}</span> -->
+            <span>
+                {new Date - endDate > 0 ? "Ended " : ""}
+                {formatDistanceToNow(endDate)}
+                <!-- {formatDistanceToNow(endDate, { addSuffix: true })} -->
+                {new Date - endDate > 0 ? " ago" : ""}
+            </span>
           </div>
 
         </div>
