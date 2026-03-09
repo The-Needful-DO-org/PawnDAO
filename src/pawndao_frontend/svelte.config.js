@@ -14,6 +14,10 @@ const config = {
       precompress: false,
       strict: true,
     }),
+    serviceWorker: {
+      // to allow load in dev manually
+      register: false
+    },
   },
 };
 
