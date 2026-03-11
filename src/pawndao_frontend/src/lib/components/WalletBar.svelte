@@ -10,9 +10,10 @@ import { invalidate } from '$app/navigation';
 import { invalidateAll } from '$app/navigation';
 
 // Generate a new Ed25519 identity in the frontend
-const identity = Ed25519KeyIdentity.generate();
+// const identity = Ed25519KeyIdentity.generate();
 
 let pem_file = $state();
+let transfer_error_message = $state();
 
 // pawn_loaner id for debugging
 const pem = `-----BEGIN EC PRIVATE KEY-----
@@ -526,6 +527,7 @@ onMount(async () => {
 async function onSubmitICRC1Transfer(event : Event) {
   event.preventDefault();
   console.log(event);
+  transfer_error_message = "";
   event.target.transfer_amount_submit.disabled = true;
   
   const token = icrc1_token_to_transfer;
@@ -542,8 +544,13 @@ async function onSubmitICRC1Transfer(event : Event) {
     // console.log("hi");
 
     // TODO auth
-    // const identity = await $auth.identity;
+    const identity = auth.identity;
     // // const identity = $auth.identity; //TODO is await necessary?
+
+    if (typeof identity === "undefined") {
+      console.warn("identity undefined");
+      return;
+    }
 
     // const agent = await createAgent({
     //   identity,
@@ -552,9 +559,10 @@ async function onSubmitICRC1Transfer(event : Event) {
     //       ? "https://icp-api.io"
     //       : "http://127.0.0.1:4944",
     // });
+    const agent = await createAgent({identity});
 
-    const agent = new HttpAgent({ /* no identity = anonymous */ });
-    // const agent = new HttpAgent({ auth.identity });
+    // const agent = new HttpAgent({ /* no identity = anonymous */ });
+    // const agent = new HttpAgent({ identity: auth.identity });
 
     // Fetch root key for certificate validation during development
     if (process.env.DFX_NETWORK !== "ic") {
@@ -579,14 +587,21 @@ async function onSubmitICRC1Transfer(event : Event) {
         to: {owner: Principal.fromText(transfer_to),
                   subaccount: [],
                  },
-        amount: amountNat, // + 10000, // TODO dynamic fee
+        amount: amountNat, // + 10000, // TODO dynamic fee?
         };
 
-    } catch (error) {
-        // Handle the exception
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.log(error);
+        console.log("Ledger transferverror");
         console.error('An error occurred:', error.message);
         // event.target.transfer_amount_submit.disabled = false;
         // throw error;
+      } else if (typeof error === 'string') {
+        console.log('Error message:', error); // Handle string errors
+      } else {
+        console.log('Unknown error type:', error);
+      }
     }
 
     let transfer_response;
@@ -595,7 +610,9 @@ async function onSubmitICRC1Transfer(event : Event) {
         transfer_response = await transfer(transferArgs);
     } catch (error) {
         // Handle the exception
+        // console.log("Ledger transfer_response error");
         console.error('An error occurred:', error.message);
+        transfer_error_message = error.message
     }
 
        console.log('Transfer response: ', transfer_response);
@@ -1065,6 +1082,7 @@ $effect(() => {
             </div>
             <button class="btn btn-info"
               id="transfer_amount_submit" type="submit">Send</button>
+            <span class="text-error">{transfer_error_message}</span>
           </form>
     </div>
 

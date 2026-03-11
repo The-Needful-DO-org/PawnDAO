@@ -54,7 +54,8 @@ const identityProvider =
       // internet identity
       identity = authClient.getIdentity();
     } else {
-      identity = auth.identity || authClient.getIdentity();
+      // identity = auth.identity || authClient.getIdentity();
+      identity = authClient.getIdentity();
     }
     const actor = createActor(canisterId, {
       agentOptions: {
