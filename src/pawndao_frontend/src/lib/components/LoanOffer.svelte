@@ -51,6 +51,7 @@
     });
 
     try {
+      // TODO use wallet
       const meta_response = await collateral_ledger.metadata({certified: false});
       const meta_map = mapTokenMetadata(meta_response);
       console.log(meta_response);

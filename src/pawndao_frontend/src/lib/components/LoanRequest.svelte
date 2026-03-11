@@ -113,6 +113,7 @@
       agent,
       canisterId: canister_id,
     });
+    // TODO generalize for icrc tokens
     const icp_amountNat = Math.round(amount*10**8);
     const approveArgs = {
       spender: {owner: Principal.fromText(process.env.CANISTER_ID_PAWNDAO_BACKEND),
