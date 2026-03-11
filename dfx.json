@@ -5,12 +5,19 @@
       "type": "custom",
       "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-02-27/ledger.did",
       "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-02-27/ic-icrc1-ledger.wasm.gz",
+      "specified_id": "llcdy-4qaaa-aaaah-arcua-cai",
+      "remote": {
+        "id": {
+          "ic": "llcdy-4qaaa-aaaah-arcua-cai"
+        }
+      },
       "init_arg": "(variant {Init = record { token_symbol = \"TPAWN\"; token_name = \"TEST Pawn DAO\"; minting_account = record { owner = principal \"llcsz-mlmss-r74nv-ak24q-rjkgm-zqz2x-jpmtu-ifrbv-q4e36-gn2mw-vae\";}; transfer_fee = 10_000; metadata = vec {}; feature_flags = opt record{icrc2 = true; archive = false}; initial_balances = vec { record { record { owner = principal \"fn5kk-kn4e4-lbi3j-to4w7-xq5fa-hcjgt-kevst-f3yy7-iemxh-h6qrs-oqe\"; }; 42_069_000_000_000_000; }; }; archive_options = record { num_blocks_to_archive = 0; trigger_threshold = 0; controller_id = principal \"fn5kk-kn4e4-lbi3j-to4w7-xq5fa-hcjgt-kevst-f3yy7-iemxh-h6qrs-oqe\"; cycles_for_archive_creation = opt 10000000000000; };  }} )"
     },
-      "icp_ledger_canister": {
+    "icp_ledger_canister": {
       "type": "custom",
       "candid": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-08-29/ledger.did",
       "wasm": "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-08-29/ledger-canister_notify-method.wasm.gz",
+      "specified_id": "ryjl3-tyaaa-aaaaa-aaaba-cai",
       "remote": {
         "id": {
           "ic": "ryjl3-tyaaa-aaaaa-aaaba-cai"
