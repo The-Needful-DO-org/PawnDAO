@@ -349,7 +349,7 @@
     {/if}
 
     {#if isLender && isActive}
-      <button class="btn btn-secondary mt-1" onclick={() => loanDefault(loan.id)}>
+      <button class="btn btn-secondary mt-1" disabled={!isExpired} onclick={() => loanDefault(loan.id)}>
         Default Loan
       </button>
     {/if}
