@@ -22,7 +22,7 @@
       <li>
         <a href="/loans" class:menu-active={$page.url.pathname == "/loans"}>Loans</a>
       </li>
-      <li class="hidden md:block">
+      <li>
         <a href="/learn" class:menu-active={$page.url.pathname == "/learn"}>Learn</a>
       </li>
     </ul>
