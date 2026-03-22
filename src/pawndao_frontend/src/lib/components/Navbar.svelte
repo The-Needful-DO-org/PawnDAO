@@ -25,6 +25,9 @@
       <li>
         <a href="/learn" class:menu-active={$page.url.pathname == "/learn"}>Learn</a>
       </li>
+<!--       <li>
+        <a href="/settings" class:menu-active={$page.url.pathname == "/settings"}>Settings</a>
+      </li> -->
     </ul>
   </div>
 </nav>
