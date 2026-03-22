@@ -77,17 +77,23 @@ const identityProvider =
     auth.actor = actor
     auth.authClient = authClient
     auth.identity = identity
-    auth.isAuthenticated = isAuthenticated
 
     if (["DelegationIdentity", "zi", "Vt"].includes(identity.constructor.name)) {
       // works for II
       auth.principal =  authClient?._identity?.getPrincipal() || auth.principal
+      auth.isAuthenticated = await authClient?.isAuthenticated();
+      // console.log("DelegationIdentity");
+      // console.log(await authClient?.isAuthenticated());
     } else if (["_Secp256k1KeyIdentity"].includes(identity.constructor.name)) {
       // works for pem
       auth.principal = identity.getPrincipal() || auth.principal
+      auth.isAuthenticated = true
     } else {
       // works for II
       auth.principal =  authClient?._identity?.getPrincipal() || auth.principal
+      auth.isAuthenticated = await authClient?.isAuthenticated();
+      // console.log("else");
+      // console.log(await authClient?.isAuthenticated());
     }
 
     // Cannot reassign exported state var
