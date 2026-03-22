@@ -55,7 +55,6 @@
 #  },
 #)'
 
-# TODO store loan request id in var
 LOAN_REQUEST_ID=$(dfx --identity dev canister call pawndao_backend loanRequestNew '(
   principal "llcdy-4qaaa-aaaah-arcua-cai",
   10_000_000_000 : nat,
@@ -93,10 +92,10 @@ echo $LOAN_OFFER_ID
 # )'
 
 echo "Backend TPAWN balance:"
-dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "u6s2n-gx777-77774-qaaba-cai";    subaccount = null; },    )'
+dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "umunu-kh777-77774-qaaca-cai";    subaccount = null; },    )'
 
 echo "Backend TICP balance:"
-dfx canister call icp_ledger_canister icrc1_balance_of '( record { owner = principal "u6s2n-gx777-77774-qaaba-cai";    subaccount = null; },    )'
+dfx canister call icp_ledger_canister icrc1_balance_of '( record { owner = principal "umunu-kh777-77774-qaaca-cai";    subaccount = null; },    )'
 
 echo "Borrower TPAWN balance:"
 dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "fn5kk-kn4e4-lbi3j-to4w7-xq5fa-hcjgt-kevst-f3yy7-iemxh-h6qrs-oqe";    subaccount = null; }, )'
@@ -109,7 +108,7 @@ dfx --identity pawn_loaner ledger balance
 
 echo "Accept Loan Offer"
 # TODO use loan offer id var
-LOAN_ID=$(dfx canister call pawndao_backend loanOfferAccept $LOAN_OFFER_ID | idl2json | jq '.[0].id' | bc)
+LOAN_ID=$(dfx --identity dev canister call pawndao_backend loanOfferAccept $LOAN_OFFER_ID | idl2json | jq '.[0].id' | bc)
 
 echo "Loan ID:"
 echo $LOAN_ID
@@ -117,10 +116,10 @@ echo $LOAN_ID
 # dfx canister call pawndao_backend loanById 0
 
 echo "Backend TPAWN balance:"
-dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "u6s2n-gx777-77774-qaaba-cai";    subaccount = null; },    )'
+dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "umunu-kh777-77774-qaaca-cai";    subaccount = null; },    )'
 
 echo "Backend TICP balance:"
-dfx canister call icp_ledger_canister icrc1_balance_of '( record { owner = principal "u6s2n-gx777-77774-qaaba-cai";    subaccount = null; },    )'
+dfx canister call icp_ledger_canister icrc1_balance_of '( record { owner = principal "umunu-kh777-77774-qaaca-cai";    subaccount = null; },    )'
 
 echo "Borrower TPAWN balance:"
 dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "fn5kk-kn4e4-lbi3j-to4w7-xq5fa-hcjgt-kevst-f3yy7-iemxh-h6qrs-oqe";    subaccount = null; }, )'
@@ -135,10 +134,10 @@ echo "Repay Loan"
 dfx --identity dev canister call pawndao_backend loanRepay $LOAN_ID
 
 echo "Backend TPAWN balance:"
-dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "u6s2n-gx777-77774-qaaba-cai";    subaccount = null; },    )'
+dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "umunu-kh777-77774-qaaca-cai";    subaccount = null; },    )'
 
 echo "Backend TICP balance:"
-dfx canister call icp_ledger_canister icrc1_balance_of '( record { owner = principal "u6s2n-gx777-77774-qaaba-cai";    subaccount = null; },    )'
+dfx canister call icp_ledger_canister icrc1_balance_of '( record { owner = principal "umunu-kh777-77774-qaaca-cai";    subaccount = null; },    )'
 
 echo "Borrower TPAWN balance:"
 dfx canister call test_pawn_ledger icrc1_balance_of '( record { owner = principal "fn5kk-kn4e4-lbi3j-to4w7-xq5fa-hcjgt-kevst-f3yy7-iemxh-h6qrs-oqe";    subaccount = null; }, )'
