@@ -6,11 +6,12 @@
 	// // import type { PageProps } from './$types';
  //  import { page } from '$app/state'
  //  import { backend } from "$lib/canisters";
- //  import { auth, getIdentityProvider } from "$lib/../stores/auth";
+ //  import { auth, getIdentityProvider } from "$lib/../../stores/auth";
  import { onMount } from "svelte";
  //  import { tick } from 'svelte';
 	let { children } = $props();
   import Navbar from "$lib/components/Navbar.svelte";
+  import Footer from "$lib/components/Footer.svelte";
 
   let isDebug = false;
 
@@ -39,9 +40,14 @@
 
 </script>
 
-<Navbar/>
+<div class="flex flex-col min-h-screen">
+  <Navbar/>
 
-<WalletBar/>
+  <WalletBar/>
 
-{@render children()}
+  <main class="flex-1">
+    {@render children()}
+  </main>
 
+  <Footer/>
+</div>

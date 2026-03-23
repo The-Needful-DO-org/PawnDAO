@@ -9,6 +9,8 @@
     </div>
   </nav>
   <aside>
-    <p>Copyright © {new Date().getFullYear()} PawnDAO. All rights reserved.</p>
+    <!-- <p>Copyright © {new Date().getFullYear()} PawnDAO. All rights reserved.</p> -->
+    <p>PawnDAO</p>
+    <img src="/pawndao.svg" />
   </aside>
 </footer>
