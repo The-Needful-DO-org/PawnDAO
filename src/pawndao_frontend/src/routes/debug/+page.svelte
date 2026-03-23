@@ -1,8 +1,8 @@
 <script>
   import { preventDefault } from 'svelte/legacy';
   import { AuthClient } from '@dfinity/auth-client';
-  import { createActor } from '../../../declarations/pawndao_backend';
-  import { canisterId } from '../../../declarations/pawndao_backend';
+  import { createActor } from '../../../../declarations/pawndao_backend';
+  import { canisterId } from '../../../../declarations/pawndao_backend';
   import { auth } from '$lib/auth.svelte.ts'
   import { whoami } from '$lib/auth.svelte.ts'
   import { updateActor } from '$lib/auth.svelte.ts'
@@ -44,6 +44,13 @@
 
 <main>
 
+  {#if (process.env.DFX_NETWORK !== "ic") }
+    {auth.principal}
+    <button class="btn" onclick={login}>Login</button>
+    <button class="btn btn-error" onclick={logout}>Logout</button>
+    <button class="btn" onclick={whoami}>whoami</button>
+  {/if}
+
   <!-- <div class="hero bg-base-200 min-h-screen"> -->
   <div class="hero bg-base-200 min-h-[calc(100vh-65px)]">
     <div class="hero-content text-center">
@@ -66,4 +73,16 @@
     </div>
   </div>
 
+  <br />
+  <br />
+  <img src="/logo2.svg" alt="DFINITY logo" />
+  <br />
+  <br />
+  <form action="#" onsubmit={preventDefault(onSubmit)}>
+    <label for="name">Enter your name: &nbsp;</label>
+    <input id="name" alt="Name" type="text" />
+    <!-- <input bind:value={name} id="name" alt="Name" type="text" /> -->
+    <button type="submit">Click Me!</button>
+  </form>
+  <section id="greeting">{greeting}</section>
 </main>
