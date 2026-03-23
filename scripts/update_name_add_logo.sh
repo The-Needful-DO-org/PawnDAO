@@ -1,4 +1,4 @@
-LOGO_URI=$(base64 src/pawndao_frontend/static/icrc1_logos/pawndao.svg  -w 0)
+LOGO_URI=$(base64 src/pawndao_frontend/static/pawndao.svg  -w 0)
 dfx deploy test_pawn_ledger --argument "( 
   variant { 
     Upgrade = opt record {
