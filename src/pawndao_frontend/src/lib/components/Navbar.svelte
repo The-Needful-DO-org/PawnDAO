@@ -22,9 +22,6 @@
       <li>
         <a href="/loans" class:menu-active={$page.url.pathname == "/loans"}>Loans</a>
       </li>
-      <li>
-        <a href="/learn" class:menu-active={$page.url.pathname == "/learn"}>Learn</a>
-      </li>
 <!--       <li>
         <a href="/settings" class:menu-active={$page.url.pathname == "/settings"}>Settings</a>
       </li> -->
