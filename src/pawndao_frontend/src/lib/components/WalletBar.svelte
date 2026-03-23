@@ -882,15 +882,15 @@ $effect(() => {
 
     {#if (process.env.DFX_NETWORK !== "ic") }
       <!-- TODO figure out proper invalidation tactic -->
-      <button class="btn" onclick={async()=> {await updateActor({pem: pem}); invalidateAll();}}>Loaner login</button>
-      <button class="btn" onclick={()=>updateActor({ii: true})}>II</button>
-      <!-- <button class="btn" onclick={async ()=>await wallet.getPrincipal()}>wallet.getPrincipal</button> -->
-      <button class="btn" onclick={() => login_modal.showModal() }>Login</button>
+      <button class="btn walletbar-control-btn" onclick={async()=> {await updateActor({pem: pem}); invalidateAll();}}>Loaner login</button>
+      <button class="btn walletbar-control-btn" onclick={()=>updateActor({ii: true})}>II</button>
+      <!-- <button class="btn walletbar-control-btn border-gray-300" onclick={async ()=>await wallet.getPrincipal()}>wallet.getPrincipal</button> -->
+      <button class="btn walletbar-control-btn" onclick={() => login_modal.showModal() }>Login</button>
     {:else}
       {#if (auth.isAuthenticated == false)}
-        <button class="btn" onclick={login}>Login</button>
+        <button class="btn walletbar-control-btn" onclick={login}>Login</button>
       {:else}
-        <button class="btn btn-error" onclick={logout}>Logout</button>
+        <button class="btn walletbar-control-btn btn-error" onclick={logout}>Logout</button>
       {/if}
     {/if}
 
@@ -906,7 +906,7 @@ $effect(() => {
       </button>
     {/if}
 
-    <button class="rounded-full btn "
+    <button class="btn walletbar-control-btn rounded-full "
             aria-label="Toggle Wallet View" 
             onclick={() => {
             isWalletBarExpanded = !isWalletBarExpanded;
@@ -1143,4 +1143,11 @@ $effect(() => {
 
   </div>
 </div>
+
+<style>
+  .walletbar-control-btn {
+    border: 1px solid rgba(200, 200, 200, 0.6) !important;
+    background-color: rgba(0, 0, 0, 0.70) !important;
+  }
+</style>
 
