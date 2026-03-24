@@ -876,7 +876,7 @@ $effect(() => {
 
 
 
-<div class="sticky  top-15 z-1000 container mx-auto">
+<div class="sticky  top-20 md:top-22 z-1000 container mx-auto">
 
   <div id="walletBar" class="absolute -top-2 right-2 md:right-0 lg:-right-6 text-white text-sm text-shadow-cloud text-right">
 

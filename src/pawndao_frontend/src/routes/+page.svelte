@@ -42,10 +42,10 @@
   }
 </script>
 
-<main>
+<main class="flex-1 bg-base-200">
 
   <!-- <div class="hero bg-base-200 min-h-screen"> -->
-  <div class="hero bg-base-200 min-h-[calc(100vh-65px)]">
+  <div class="hero bg-base-200 min-h-[calc(80vh-65px)] md:min-h-[calc(50vh-65px)] -mt-[2.5em]">
     <div class="hero-content text-center">
       <div class="max-w-md">
         <h1 class="text-5xl font-bold">The People's Pawn Shop</h1>
