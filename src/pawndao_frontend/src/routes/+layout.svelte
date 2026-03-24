@@ -45,9 +45,7 @@
 
   <WalletBar/>
 
-  <main class="flex-1">
-    {@render children()}
-  </main>
+  {@render children()}
 
   <Footer/>
 </div>
