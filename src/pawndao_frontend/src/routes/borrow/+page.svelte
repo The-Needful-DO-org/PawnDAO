@@ -9,6 +9,12 @@
   import type { LoanOffer } from "../../../../declarations/pawndao_backend/pawndao_backend.did";
   import LoanRequest from "$lib/components/LoanRequest.svelte";
   let showLoanRequestForm = $state(false);
+  import { pushState } from '$app/navigation';
+  import { page } from '$app/state';
+
+  function showElement() {
+    pushState('', { showLoanRequestForm: true }); // Update history state without changing URL
+  }
 
   // TODO cleaner solution for loan offer count
   let allLoanOffers : LoanOffer[] = $state([]);
@@ -22,17 +28,20 @@
   <div class="container mx-auto">
     <h1 class="text-xl">Borrow</h1>
 
-    {#if !showLoanRequestForm}
+    {#if !page.state.showLoanRequestForm}
       <button 
         class="btn btn-primary"
-        onclick={() => showLoanRequestForm = true}>
+        onclick={showElement}>
         New Loan Request
       </button>
+      <!-- TODO use a page instead of element visibility
+      <a href="/loan-requests/new">New Loan Request</a>
+      <a href="/borrow/new">New Loan Request</a> -->
     {/if}
 
-    {#if showLoanRequestForm}
-      <NewLoanRequestForm bind:showLoanRequestForm />
-    {/if}
+    <div style="display: {page.state.showLoanRequestForm ? 'block' : 'none'}">
+      <NewLoanRequestForm />
+    </div>
 
     <h2>My Loan Requests</h2>
 
