@@ -227,7 +227,6 @@
         <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value={token.canister_id} aria-label={token.symbol || 'Custom'} required />
       {/each}
     </div>
-  </div>
 
   <!-- Collateral Balance -->
           <!-- {wallet.icrc1_tokens[0].symbol} {wallet.icrc1_tokens[0].balance}  -->
