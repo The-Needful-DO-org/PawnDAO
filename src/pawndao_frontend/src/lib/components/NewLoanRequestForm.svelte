@@ -182,7 +182,8 @@
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="CUSTOM" aria-label="Custom" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="CUSTOM" aria-label="Custom" required 
+              onclick="{() => {document.getElementById('customCollateralWrapper').classList.remove('hidden');}}" />
           </div>
         </div>
         <div id="customCollateralWrapper" class="hidden">
