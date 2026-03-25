@@ -19,10 +19,12 @@
   async function handleAddCustomCollateral() {
     const input = document.getElementById('customCollateralInput');
     if (input && input.value) {
+      const inputValue = input.value;
       try {
-        await wallet.addICRC1Token(input.value);
+        await wallet.addICRC1Token(inputValue);
         setTimeout(() => {
-          const token = wallet.icrc1_tokens.find(t => t.canister_id === input.value);
+          const token = wallet.icrc1_tokens.find(t => t.canister_id === inputValue);
+          console.log(wallet.icrc1_tokens);
           if (token && !customTokens.find(t => t.canister_id === token.canister_id)) {
             customTokens = [...customTokens, token];
           }
@@ -207,9 +209,10 @@
                   class="input input-bordered input-primary w-full max-w-xs" 
                   onkeydown="{(e) => {if(e.key === 'Enter') {handleAddCustomCollateral();}}}" />
               <button type="button" class="btn btn-primary" onclick="{handleAddCustomCollateral}">+</button>
-            </div>
-          </div>
-        </div>
+              <!-- Custom Token Buttons -->
+              {#each customTokens as token}
+                <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value={token.canister_id} aria-label={token.symbol || 'Custom'} required />
+              {/each}
 
       <div class="form-control">
         <label class="label">
@@ -222,10 +225,6 @@
             </div>
           </div>
 
-          <!-- Custom Token Buttons -->
-      {#each customTokens as token}
-        <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value={token.canister_id} aria-label={token.symbol || 'Custom'} required />
-      {/each}
     </div>
 
   <!-- Collateral Balance -->
