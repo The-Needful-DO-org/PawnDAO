@@ -172,6 +172,7 @@
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" required />
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" required />
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
+              <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="o3mvq-caaaa-aaaai-qpfua-cai" aria-label="DITTO" required />
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" required />
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
               <input disabled bind:group={collateral_canister_id} class="btn" type="radio" name="collateral_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
@@ -296,6 +297,7 @@
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="hvgxa-wqaaa-aaaaq-aacia-cai" aria-label="SNEED" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" />
+              <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="o3mvq-caaaa-aaaai-qpfua-cai" aria-label="DITTO" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7pail-xaaaa-aaaas-aabmq-cai" aria-label="BOB" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" />
@@ -413,6 +415,7 @@
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="zfcdd-tqaaa-aaaaq-aaaga-cai" aria-label="DKP" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="pcj6u-uaaaa-aaaak-aewnq-cai" aria-label="CLOUD" required />
+              <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="o3mvq-caaaa-aaaai-qpfua-cai" aria-label="DITTO" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="iwv6l-6iaaa-aaaal-ajjjq-cai" aria-label="CLOWN" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
