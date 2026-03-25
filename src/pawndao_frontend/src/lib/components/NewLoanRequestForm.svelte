@@ -210,11 +210,7 @@
             </div>
           </div>
         </div>
-        <div id="customCollateralWrapper" class="hidden">
-          <input type="text" id="customCollateralInput" placeholder="Enter custom canister ID" 
-              class="input input-bordered input-primary w-full max-w-xs" 
-              onchange="{() => {if(this.value) {selectedCollateralId = this.value; wallet.addICRC1Token(this.value);}}}" />
-      </div>
+
       <div class="form-control">
         <label class="label">
           <span class="label-text">Collateral Amount</span>
