@@ -165,12 +165,12 @@
               <div class="validator-hint hidden">Required</div>
               <input bind:group={selectedCollateralId} id="icp-btn" class="btn validator" type="radio" name="collateral_canister_id" value="ryjl3-tyaaa-aaaaa-aaaba-cai" aria-label="ICP" required />
               {#if (process.env.DFX_NETWORK !== "ic")}
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="llcdy-4qaaa-aaaah-arcua-cai" aria-label="TPAWN" required />
               {/if}
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="mxzaz-hqaaa-aaaar-qaada-cai" aria-label="ckBTC" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="ss2fx-dyaaa-aaaar-qacoq-cai" aria-label="ckETH" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="xevnm-gaaaa-aaaar-qafnq-cai" aria-label="ckUSDC" required />
             </div>
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="o3mvq-caaaa-aaaai-qpfua-cai" aria-label="DITTO" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
           </div>
 
           <!-- Collateral Balance -->
