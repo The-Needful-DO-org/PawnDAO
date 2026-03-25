@@ -182,8 +182,12 @@
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
-              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="CUSTOM" aria-label="Custom" required 
-              onclick="{() => {document.getElementById('customCollateralWrapper').classList.remove('hidden');}}" />
+              <div class="flex gap-2 items-center">
+              <input type="text" id="customCollateralInput" placeholder="Enter canister ID" 
+                  class="input input-bordered input-primary w-full max-w-xs" 
+                  onkeydown="{(e) => {if(e.key === 'Enter') {handleAddCustomCollateral();}}}" />
+              <button type="button" class="btn btn-primary" onclick="{handleAddCustomCollateral}">+</button>
+            </div>
           </div>
         </div>
         <div id="customCollateralWrapper" class="hidden">
@@ -202,7 +206,14 @@
             </div>
           </div>
 
-          <!-- Collateral Balance -->
+          <!-- Custom Token Buttons -->
+      {#each customTokens as token}
+        <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value={token.canister_id} aria-label={token.symbol || 'Custom'} required />
+      {/each}
+    </div>
+  </div>
+
+  <!-- Collateral Balance -->
           <!-- {wallet.icrc1_tokens[0].symbol} {wallet.icrc1_tokens[0].balance}  -->
           {#if selectedCollateralId}
             <!-- TODO account for fees -->
