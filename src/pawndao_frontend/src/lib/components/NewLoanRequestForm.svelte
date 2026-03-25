@@ -182,6 +182,21 @@
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" required />
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
+              <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="CUSTOM" aria-label="Custom" required />
+          </div>
+        </div>
+        <div id="customCollateralWrapper" class="hidden">
+          <input type="text" id="customCollateralInput" placeholder="Enter custom canister ID" 
+              class="input input-bordered input-primary w-full max-w-xs" 
+              onchange="{() => {if(this.value) {selectedCollateralId = this.value; wallet.addICRC1Token(this.value);}}}" />
+      </div>
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Collateral Amount</span>
+        </label>
+        <!-- Collateral Amount Input -->
+
+
               <input bind:group={selectedCollateralId} class="btn" type="radio" name="collateral_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
             </div>
           </div>
