@@ -306,6 +306,15 @@
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="buwm7-7yaaa-aaaar-qagva-cai" aria-label="nICP" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" />
               <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" />
+            {#each customDesiredTokens as token}
+              <input disabled bind:group={desired_assets} class="btn" type="checkbox" name="desired_asset_canister_ids" value={token.canister_id} aria-label={token.symbol || 'Custom'} />
+            {/each}
+            <div class="flex gap-2 items-center">
+              <input type="text" id="customDesiredAssetInput" placeholder="Enter canister ID" 
+                  class="input input-bordered input-primary w-full max-w-xs" 
+                  onkeydown="{(e) => {if(e.key === 'Enter') {handleAddCustomDesiredToken();}}}" />
+              <button type="button" class="btn btn-primary" onclick="{handleAddCustomDesiredToken}">+</button>
+            </div>
             </div>
             {/if}
           </div>
@@ -420,6 +429,15 @@
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="2ouva-viaaa-aaaaq-aaamq-cai" aria-label="CHAT" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="6c7su-kiaaa-aaaar-qaira-cai" aria-label="GLDT" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="i2s4q-syaaa-aaaan-qz4sq-cai" aria-label="sGLDT" required />
+          {#each customLoanTokens as token}
+            <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value={token.canister_id} aria-label={token.symbol || 'Custom'} required />
+          {/each}
+          <div class="flex gap-2 items-center">
+            <input type="text" id="customLoanAssetInput" placeholder="Enter canister ID" 
+                class="input input-bordered input-primary w-full max-w-xs" 
+                onkeydown="{(e) => {if(e.key === 'Enter') {handleAddCustomLoanToken();}}}" />
+            <button type="button" class="btn btn-primary" onclick="{handleAddCustomLoanToken}">+</button>
+          </div>
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="7xkvf-zyaaa-aaaal-ajvra-cai" aria-label="PARTY" required />
               <input bind:group={loan_asset_canister_id} class="btn" type="radio" name="loan_asset_canister_id" value="rh2pm-ryaaa-aaaan-qeniq-cai" aria-label="EXE" required />
             </div>
