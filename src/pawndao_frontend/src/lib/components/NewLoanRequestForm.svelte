@@ -14,6 +14,26 @@
   let desired_assets = $state([]);
   let selectedCollateralId = $state("");
   let collateral_amount : Number | undefined = $state();
+  let customTokens = $state([]);
+  
+  async function handleAddCustomCollateral() {
+    const input = document.getElementById('customCollateralInput');
+    if (input && input.value) {
+      try {
+        await wallet.addICRC1Token(input.value);
+        setTimeout(() => {
+          const token = wallet.icrc1_tokens.find(t => t.canister_id === input.value);
+          if (token && !customTokens.find(t => t.canister_id === token.canister_id)) {
+            customTokens = [...customTokens, token];
+          }
+        }, 500);
+      } catch(e) {
+        console.error('Failed to add token:', e);
+      }
+      input.value = '';
+    }
+  }
+  
   let collateral_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === selectedCollateralId));
   let desired_token = $derived(wallet.icrc1_tokens.find(token => token.canister_id === desired_assets[0]));
   refreshAllICRC1Tokens();
